@@ -14,13 +14,22 @@
 
 ### ครั้งแรก (สำหรับน้องในทีม)
 
-เปิด Terminal แล้วพิมพ์:
+1. เปิด **PowerShell** (หรือ Terminal อะไรก็ได้)
+2. **Copy ทั้งบรรทัดด้านล่างนี้** (ห้าม copy แค่ URL!):
 
-```bash
+```
 hermes skills tap add https://github.com/thanatkjr/kas-hermes-skills.git
 ```
 
-จากนั้น restart Hermes หรือใช้ `/reload-skills`
+3. วางลงใน Terminal แล้วกด Enter
+4. รอสักครู่ — ระบบจะโหลด skills ให้อัตโนมัติ
+5. Restart Hermes หรือใช้ `/reload-skills`
+
+### ⚠️ ระวัง!
+
+❌ **ผิด:** `https://github.com/thanatkjr/kas-hermes-skills.git` (เปิด browser — ไม่ได้ติดตั้ง)
+
+✅ **ถูก:** `hermes skills tap add https://github.com/thanatkjr/kas-hermes-skills.git` (ทั้งบรรทัด)
 
 ### เมื่อมีอัปเดต
 
