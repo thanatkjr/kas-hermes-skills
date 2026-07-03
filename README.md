@@ -14,41 +14,26 @@
 
 ## 🚀 วิธีติดตั้ง (สำหรับน้องในทีม)
 
-### 🔥 One-liner (Git Bash / PowerShell)
+### 🔥 Double-click จบ! (ง่ายสุด)
 
-Copy ทั้งบล็อกด้านล่าง วางแล้วกด Enter (ติดตั้ง 3 skills รวดเดียว):
-
-**📌 Git Bash:**
-```bash
-for url in master/kas-master-context master/kas-model-routing master/productivity/kas-ia-report-helper; do hermes skills install "https://raw.githubusercontent.com/thanatkjr/kas-hermes-skills/$url/SKILL.md"; done
-```
-
-**📌 PowerShell:**
-```powershell
-"kas-master-context","kas-model-routing","productivity/kas-ia-report-helper" | ForEach-Object { hermes skills install "https://raw.githubusercontent.com/thanatkjr/kas-hermes-skills/master/$_/SKILL.md" }
-```
-
-### ติดตั้งทีละตัว (cmd / Terminal ไหนก็ได้)
-
-```
-hermes skills install https://raw.githubusercontent.com/thanatkjr/kas-hermes-skills/master/kas-master-context/SKILL.md
-hermes skills install https://raw.githubusercontent.com/thanatkjr/kas-hermes-skills/master/kas-model-routing/SKILL.md
-hermes skills install https://raw.githubusercontent.com/thanatkjr/kas-hermes-skills/master/productivity/kas-ia-report-helper/SKILL.md
-```
-
-หลังติดตั้งเสร็จ → `hermes skills list` เช็คว่ามีครบ 3 ตัว → restart Hermes หรือ `/reload-skills`
+1. ดาวน์โหลด [`install.bat`](https://raw.githubusercontent.com/thanatkjr/kas-hermes-skills/master/install.bat) ไปไว้ที่ Desktop
+2. **Double-click** `install.bat`
+3. รอจนขึ้น `ติดตั้งแล้ว 3 skills`
+4. Restart Hermes หรือใช้ `/reload-skills`
 
 ### 🔄 เมื่อมีอัปเดต
 
-```
-hermes skills update
-```
+Double-click `install.bat` อีกครั้ง — ระบบจะ pull เวอร์ชั่นล่าสุดจาก GitHub แล้วติดตั้งให้อัตโนมัติ
+
+> 💡 ไม่ต้องแก้ `install.bat` ใหม่เมื่อเพิ่ม skill! มันจะหา SKILL.md **ทั้งหมด** ใน repo เอง
 
 ---
 
 ## 📁 โครงสร้าง Repo
 
 ```
+├── install.bat                ← Double-click ติดตั้ง!
+├── README.md
 ├── kas-master-context/
 │   ├── SKILL.md
 │   └── references/
