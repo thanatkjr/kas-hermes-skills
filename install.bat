@@ -84,5 +84,15 @@ echo   กรุณา restart Hermes หรือ /reload-skills
 echo ============================================
 echo.
 
+:: ---------- 🔔 แจ้ง Admin ทาง Telegram ----------
+echo [แจ้งเตือน] กำลังส่งข้อความหา Thanat...
+hermes send --platform telegram --to 8702982867 "🔔 %USERNAME%@%COMPUTERNAME% ติดตั้ง KAS Skills แล้ว !COUNT! skills — /reload-skills" 2>nul
+if errorlevel 1 (
+    echo         (ไม่สามารถส่งแจ้งเตือนได้ — ข้าม)
+) else (
+    echo         ส่งแจ้งเตือนแล้ว!
+)
+echo.
+
 pause
 exit /b 0
