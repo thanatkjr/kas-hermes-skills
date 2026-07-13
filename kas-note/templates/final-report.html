@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>รายงานการสัมภาษณ์ — {{TOPIC}}</title>
+<style>
+  :root {
+    --bg: #f8f9fa;
+    --card-bg: #ffffff;
+    --border: #dee2e6;
+    --text: #212529;
+    --text-secondary: #6c757d;
+    --accent: #1e3a5f;
+    --accent-light: #e8f0fe;
+    --green: #059669;
+    --green-bg: #ecfdf5;
+    --blue: #2563eb;
+    --blue-bg: #eff6ff;
+    --red: #dc2626;
+    --red-bg: #fef2f2;
+    --yellow: #d97706;
+    --yellow-bg: #fffbeb;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Sarabun', 'IBM Plex Sans Thai', 'Noto Sans Thai', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.8;
+    font-size: 15px;
+    padding: 20px;
+  }
+  .container { max-width: 900px; margin: 0 auto; }
+
+  .cover {
+    background: linear-gradient(135deg, var(--accent) 0%, #2d5a8e 100%);
+    color: #fff;
+    padding: 40px;
+    border-radius: var(--radius);
+    margin-bottom: 24px;
+  }
+  .cover h1 { font-size: 1.75rem; margin-bottom: 8px; }
+  .cover .subtitle { font-size: 1.1rem; opacity: 0.85; }
+  .cover .meta {
+    margin-top: 20px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 6px 20px;
+    font-size: 0.9rem;
+    opacity: 0.9;
+  }
+  .cover .meta dt { font-weight: 600; }
+  .cover .meta dd { margin: 0; }
+  .cover .report-id {
+    margin-top: 16px;
+    font-size: 0.8rem;
+    opacity: 0.7;
+    font-family: monospace;
+  }
+
+  .section {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 28px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  .section h2 {
+    font-size: 1.2rem;
+    color: var(--accent);
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--accent-light);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section h3 {
+    font-size: 1rem;
+    color: var(--text);
+    margin: 16px 0 8px;
+  }
+
+  .related-notes {
+    background: #f1f5f9;
+    border-radius: 6px;
+    padding: 16px;
+    margin-top: 12px;
+  }
+  .related-notes ul { list-style: none; padding: 0; }
+  .related-notes li { padding: 4px 0; font-size: 0.9rem; }
+  .related-notes li::before { content: "📎 "; }
+
+  .content-block {
+    margin-bottom: 12px;
+    padding: 10px 16px;
+    border-radius: 6px;
+    border-left: 4px solid;
+  }
+  .content-block p { margin: 0; }
+
+  .conf-high { background: var(--green-bg); border-left-color: var(--green); }
+  .conf-high::before {
+    content: "🟢 มั่นใจสูง | ";
+    font-size: 0.8rem; font-weight: 600; color: var(--green);
+  }
+  .conf-mid { background: var(--blue-bg); border-left-color: var(--blue); }
+  .conf-mid::before {
+    content: "🔵 มั่นใจปานกลาง | ";
+    font-size: 0.8rem; font-weight: 600; color: var(--blue);
+  }
+  .conf-low { background: var(--red-bg); border-left-color: var(--red); }
+  .conf-low::before {
+    content: "🔴 ต้องตรวจสอบเพิ่ม | ";
+    font-size: 0.8rem; font-weight: 600; color: var(--red);
+  }
+
+  .policy-sub { margin-bottom: 16px; }
+  .policy-sub h4 { font-size: 0.95rem; color: #7c3aed; margin-bottom: 6px; }
+  .policy-item {
+    padding: 6px 12px; margin: 4px 0; border-radius: 4px;
+    background: #f5f3ff; border-left: 3px solid #7c3aed;
+  }
+
+  .appendix-item {
+    padding: 8px 12px; margin: 4px 0;
+    background: #f8f9fa; border-radius: 4px; border: 1px solid var(--border);
+    font-size: 0.9rem;
+  }
+  .appendix-item .appendix-num {
+    font-weight: 600; color: var(--text-secondary); margin-right: 8px;
+  }
+
+  .risk-item, .incident-item { padding: 8px 12px; margin: 6px 0; border-radius: 4px; }
+  .risk-item { background: var(--yellow-bg); border-left: 3px solid var(--yellow); }
+  .incident-item { background: #fef2f2; border-left: 3px solid #dc2626; }
+
+  .info-item {
+    padding: 6px 12px; margin: 4px 0; border-radius: 4px;
+    background: #ecfdf5; border-left: 3px solid #10b981;
+  }
+
+  .no-data { color: var(--text-secondary); font-style: italic; }
+
+  /* Merge source badge */
+  .source-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-left: 8px;
+  }
+  .source-merged { background: #dbeafe; color: #1e40af; }
+
+  @media print {
+    body { background: #fff; padding: 0; font-size: 13px; }
+    .section { box-shadow: none; break-inside: avoid; }
+    .cover { background: var(--accent) !important; -webkit-print-color-adjust: exact; }
+    .conf-high, .conf-mid, .conf-low { -webkit-print-color-adjust: exact; }
+  }
+
+  .report-footer {
+    text-align: center; color: var(--text-secondary);
+    font-size: 0.8rem; margin-top: 32px; padding: 16px;
+    border-top: 1px solid var(--border);
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- 1. COVER -->
+  <div class="cover">
+    <h1>📋 KAS Report — รายงานการสัมภาษณ์</h1>
+    <div class="subtitle">{{TOPIC}}</div>
+    <dl class="meta">
+      <dt>วันที่บันทึก:</dt><dd>{{DATE}}</dd>
+      <dt>ผู้บันทึก:</dt><dd>{{RECORDER}} ({{RECORDER_CODE}})</dd>
+      <dt>บริษัท:</dt><dd>{{COMPANY}}</dd>
+      <dt>ผู้ให้สัมภาษณ์:</dt><dd>{{INTERVIEWEE}}</dd>
+    </dl>
+    <div class="report-id">🆔 {{REPORT_ID}}</div>
+  </div>
+
+  <!-- 2. Company & Topic -->
+  <div class="section">
+    <h2>🏢 ชื่อบริษัท และ หัวเรื่อง</h2>
+    <p><strong>บริษัท:</strong> {{COMPANY}}</p>
+    <p><strong>หัวเรื่อง (กระบวนการ/กิจกรรม):</strong> {{TOPIC}}</p>
+    {{RELATED_NOTES}}
+  </div>
+
+  <!-- 3. Interviewee -->
+  {{INTERVIEWEE_SECTION}}
+
+  <!-- 4. Policy -->
+  {{POLICY_SECTION}}
+
+  <!-- 5. Procedure -->
+  {{PROCEDURE_SECTION}}
+
+  <!-- 6. Incidents & Risks -->
+  {{INCIDENT_RISK_SECTION}}
+
+  <!-- 7. Key Internal Controls -->
+  {{CONTROL_SECTION}}
+
+  <!-- 8. General Info -->
+  {{GENERAL_SECTION}}
+
+  <!-- 9. Other -->
+  {{OTHER_SECTION}}
+
+  <!-- 10. Appendix -->
+  <div class="section">
+    <h2>📎 ภาคผนวก — ข้อมูลดิบทั้งหมด</h2>
+    <p style="color:var(--text-secondary);font-size:0.85rem;margin-bottom:12px">
+      ข้อมูลดิบที่บันทึกไว้ทั้งหมดโดยไม่มีการตัดแต่ง แก้ไข หรือตีความ
+    </p>
+    {{APPENDIX}}
+  </div>
+
+  <div class="report-footer">
+    📅 {{GENERATED_DATE}} | 🔒 KAS Internal Use Only — Kandit Advisory Services
+  </div>
+
+</div>
+</body>
+</html>

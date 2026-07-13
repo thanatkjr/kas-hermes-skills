@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📝 KAS Note — {{TOPIC}}</title>
+<style>
+  :root {
+    --bg: #f8f9fa;
+    --card-bg: #ffffff;
+    --border: #dee2e6;
+    --text: #212529;
+    --text-secondary: #6c757d;
+    --accent: #2563eb;
+    --accent-light: #eff6ff;
+    --radius: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Sarabun', 'IBM Plex Sans Thai', 'Noto Sans Thai', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 20px;
+  }
+  .container { max-width: 1200px; margin: 0 auto; }
+
+  .header-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .header-card h1 {
+    font-size: 1.5rem;
+    color: var(--accent);
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--accent-light);
+  }
+  .meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 12px;
+  }
+  .meta-item {
+    display: flex;
+    gap: 8px;
+  }
+  .meta-label {
+    font-weight: 600;
+    color: var(--text-secondary);
+    min-width: 100px;
+  }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 16px;
+    padding: 12px 16px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    align-items: center;
+  }
+  .legend-title {
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-right: 4px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.875rem;
+    padding: 4px 10px;
+    border-radius: 16px;
+  }
+  .legend-P  { background: #f3f0ff; }
+  .legend-PR { background: #eff6ff; }
+  .legend-I  { background: #fef2f2; }
+  .legend-R  { background: #fffbeb; }
+  .legend-G  { background: #ecfdf5; }
+  .legend-O  { background: #f3f4f6; }
+  .dot-P  { color: #7c3aed; font-size: 1.2rem; }
+  .dot-PR { color: #2563eb; font-size: 1.2rem; }
+  .dot-I  { color: #ef4444; font-size: 1.2rem; }
+  .dot-R  { color: #f59e0b; font-size: 1.2rem; }
+  .dot-G  { color: #10b981; font-size: 1.2rem; }
+  .dot-O  { color: #6b7280; font-size: 1.2rem; }
+
+  /* Table */
+  .table-wrapper {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  th {
+    background: #f1f5f9;
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    border-bottom: 2px solid var(--border);
+  }
+  td {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  tr:hover { background: #f8fafc; }
+  .col-num {
+    width: 50px;
+    text-align: center;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+  td[contenteditable="true"] {
+    min-width: 200px;
+    outline: none;
+    border-radius: 4px;
+    transition: background 0.15s, box-shadow 0.15s;
+  }
+  td[contenteditable="true"]:focus {
+    background: #eff6ff;
+    box-shadow: inset 0 0 0 2px var(--accent);
+  }
+
+  /* CATEGORY SELECT — with colored options */
+  select.cat-select {
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-size: 0.875rem;
+    background: #fff;
+    cursor: pointer;
+    width: 100%;
+    max-width: 240px;
+    font-weight: 500;
+  }
+  select.cat-select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(37,99,235,0.2);
+  }
+  /* Colored option text via inline style on each option */
+
+  /* Buttons */
+  .btn-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    padding: 10px 24px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover { background: #1d4ed8; }
+  .btn-outline {
+    background: #fff;
+    color: var(--accent);
+    border: 2px solid var(--accent);
+  }
+  .btn-outline:hover { background: var(--accent-light); }
+  .btn-danger {
+    background: #fff;
+    color: #dc2626;
+    border: 2px solid #dc2626;
+  }
+  .btn-danger:hover { background: #fef2f2; }
+
+  .status-bar {
+    margin-top: 16px;
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    display: none;
+  }
+  .status-success { background: #d1fae5; color: #065f46; display: block; }
+  .status-info    { background: #dbeafe; color: #1e40af; display: block; }
+
+  .footer-note {
+    margin-top: 24px;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    line-height: 1.7;
+  }
+
+  @media print {
+    body { background: #fff; padding: 0; }
+    .btn-row, .legend { display: none; }
+    td[contenteditable="true"]:focus { background: transparent; box-shadow: none; }
+    select.cat-select { -webkit-appearance: none; border: none; background: transparent; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header-card">
+    <h1>📝 KAS Note — ตารางวิเคราะห์ข้อมูล</h1>
+    <div class="meta-grid">
+      <div class="meta-item">
+        <span class="meta-label">วันที่บันทึก:</span>
+        <span class="meta-value" id="header-date">{{DATE}}</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">หัวข้อ:</span>
+        <span class="meta-value" id="header-topic" contenteditable="true">{{TOPIC}}</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">บริษัท:</span>
+        <span class="meta-value" id="header-company" contenteditable="true">{{COMPANY}}</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">ผู้ให้สัมภาษณ์:</span>
+        <span class="meta-value" id="header-interviewee" contenteditable="true">{{INTERVIEWEE}}</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">ผู้บันทึก:</span>
+        <span class="meta-value">{{RECORDER}} ({{RECORDER_CODE}})</span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Note ID:</span>
+        <span class="meta-value" style="font-family:monospace;font-size:0.85rem">{{NOTE_ID}}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <span class="legend-title">📌 ประเภท:</span>
+    <span class="legend-item legend-P"><span class="dot-P">🟣</span> <strong>P</strong> นโยบาย</span>
+    <span class="legend-item legend-PR"><span class="dot-PR">🔵</span> <strong>PR</strong> ขั้นตอนปฏิบัติ</span>
+    <span class="legend-item legend-I"><span class="dot-I">🔴</span> <strong>I</strong> สิ่งผิดปกติ</span>
+    <span class="legend-item legend-R"><span class="dot-R">🟡</span> <strong>R</strong> ความเสี่ยง</span>
+    <span class="legend-item legend-G"><span class="dot-G">🟢</span> <strong>G</strong> ข้อมูลทั่วไป</span>
+    <span class="legend-item legend-O"><span class="dot-O">⚫</span> <strong>O</strong> อื่นๆ</span>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrapper">
+    <table id="analysis-table">
+      <thead>
+        <tr>
+          <th style="width:50px">#</th>
+          <th style="width:55%">ข้อมูลดิบ (Raw Data)</th>
+          <th style="width:25%">ประเภท (Category)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{TABLE_ROWS}}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Buttons -->
+  <div class="btn-row">
+    <button class="btn btn-outline" onclick="addRow()">➕ เพิ่มแถว</button>
+    <button class="btn btn-outline" onclick="saveAsHTML()">💾 Save Note As...</button>
+    <button class="btn btn-outline" onclick="window.print()">🖨️ พิมพ์</button>
+    <button class="btn btn-primary" onclick="confirmAndSave()">✅ Confirm &amp; Save</button>
+  </div>
+
+  <div id="status" class="status-bar"></div>
+
+  <div class="footer-note">
+    💡 <strong>วิธีใช้:</strong> คลิกที่ช่องข้อมูลดิบหรือประเภทเพื่อแก้ไขได้โดยตรง 
+    เมื่อแก้ไขเสร็จแล้ว กด <strong>Confirm &amp; Save</strong> 
+    จากนั้นกลับไปที่ Hermes แล้วพิมพ์ <strong>"ยืนยัน"</strong> เพื่อสร้างรายงานฉบับสมบูรณ์
+  </div>
+
+</div>
+
+<script>
+// ── Add new row ──────────────────────────────────
+function addRow() {
+  const tbody = document.querySelector('#analysis-table tbody');
+  const rowCount = tbody.querySelectorAll('tr').length;
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td class="col-num">${rowCount + 1}</td>
+    <td contenteditable="true">[ข้อมูลใหม่]</td>
+    <td>
+      <select class="cat-select">
+        <option value="P"  style="color:#7c3aed">🟣 P — นโยบาย</option>
+        <option value="PR" style="color:#2563eb">🔵 PR — ขั้นตอนปฏิบัติ</option>
+        <option value="I"  style="color:#ef4444">🔴 I — สิ่งผิดปกติ</option>
+        <option value="R"  style="color:#f59e0b">🟡 R — ความเสี่ยง</option>
+        <option value="G"  style="color:#10b981">🟢 G — ข้อมูลทั่วไป</option>
+        <option value="O"  style="color:#6b7280" selected>⚫ O — อื่นๆ</option>
+      </select>
+    </td>
+  `;
+  tbody.appendChild(tr);
+  tr.scrollIntoView({ behavior: 'smooth' });
+  updateRowNumbers();
+}
+
+function updateRowNumbers() {
+  document.querySelectorAll('#analysis-table tbody tr').forEach((tr, i) => {
+    tr.querySelector('.col-num').textContent = i + 1;
+  });
+}
+
+// ── Confirm & Save ───────────────────────────────
+function confirmAndSave() {
+  updateRowNumbers();
+  const status = document.getElementById('status');
+  status.className = 'status-bar status-success';
+  status.textContent = '✅ บันทึกการแก้ไขเรียบร้อย — กลับไปที่ Hermes แล้วพิมพ์ "ยืนยัน" เพื่อสร้างรายงานฉบับสมบูรณ์';
+  status.scrollIntoView({ behavior: 'smooth' });
+}
+
+// ── Save As (with timestamp) ─────────────────────
+function saveAsHTML() {
+  const now = new Date();
+  const ts = now.getFullYear() +
+    String(now.getMonth()+1).padStart(2,'0') +
+    String(now.getDate()).padStart(2,'0') + '_' +
+    String(now.getHours()).padStart(2,'0') +
+    String(now.getMinutes()).padStart(2,'0');
+  const defaultName = ts + '_note.html';
+
+  const html = document.documentElement.outerHTML;
+  const blob = new Blob(['<!DOCTYPE html>\n' + html], {type: 'text/html'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = defaultName;
+  a.click();
+  URL.revokeObjectURL(url);
+
+  const status = document.getElementById('status');
+  status.className = 'status-bar status-info';
+  status.textContent = '📥 ดาวน์โหลดเป็น: ' + defaultName;
+}
+</script>
+</body>
+</html>
