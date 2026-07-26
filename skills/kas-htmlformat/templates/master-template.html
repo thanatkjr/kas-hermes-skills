@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{TITLE}}</title>
+<style>
+/* === PRINT: Landscape PDF === */
+@page { size: {{WIDTH}} {{HEIGHT}} landscape; margin: 0; }
+
+/* === Base === */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: '{{FONT}}', 'Tahoma', sans-serif;
+  background: #e2e8f0;
+  color: #1e293b;
+  font-size: {{FONT_SIZE}};
+}
+
+/* === Slide Container === */
+.slide-container {
+  width: {{WIDTH}};
+  height: {{HEIGHT}};
+  margin: 20px auto;
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  position: relative;
+  overflow: hidden;
+  page-break-after: always;
+  display: flex;
+  flex-direction: column;
+}
+
+/* === Header === */
+.slide-header {
+  background: linear-gradient(90deg, {{PRIMARY}}, {{ACCENT}});
+  color: #fff;
+  padding: 12px 24px;
+  font-size: 1.1em;
+  font-weight: 700;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+}
+
+/* === Body === */
+.slide-body {
+  flex: 1;
+  padding: 20px 24px;
+  overflow: hidden;
+}
+
+/* === Footer === */
+.slide-footer {
+  background: #f1f5f9;
+  padding: 6px 20px;
+  font-size: 0.7em;
+  color: #64748b;
+  display: flex;
+  justify-content: space-between;
+  min-height: 28px;
+  align-items: center;
+}
+
+/* === Split Layout (2-3 columns) === */
+.split {
+  display: flex;
+  gap: 16px;
+  height: 100%;
+}
+.split-3 { gap: 12px; }
+
+.pbox {
+  flex: 1;
+  padding: 16px 20px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.left-bg  { background: #f0fdf4; border: 1px solid #bbf7d0; }
+.right-bg { background: #f8fafc; border: 1px solid #e2e8f0; }
+.mid-bg   { background: #eff6ff; border: 1px solid #bfdbfe; }
+
+.pbox h2, .pbox h3 {
+  color: {{PRIMARY}};
+  margin-bottom: 10px;
+  font-size: 1.1em;
+}
+
+.pbox ul, .pbox ol {
+  padding-left: 20px;
+  line-height: 1.7;
+}
+
+.pbox li {
+  margin-bottom: 4px;
+  font-size: 0.9em;
+}
+
+/* === Table === */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85em;
+}
+.data-table th {
+  background: {{PRIMARY}};
+  color: #fff;
+  padding: 8px 12px;
+  text-align: left;
+  font-weight: 600;
+}
+.data-table td {
+  padding: 6px 12px;
+  border-bottom: 1px solid #e2e8f0;
+}
+.data-table tr:nth-child(even) td {
+  background: #f8fafc;
+}
+
+/* === Diagram Row === */
+.diagram-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  justify-content: center;
+  padding: 20px 10px;
+}
+
+.dbox {
+  flex: 1;
+  max-width: 240px;
+  background: #fff;
+  border: 2px solid {{PRIMARY}};
+  border-radius: 8px;
+  padding: 14px 16px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.dbox strong {
+  display: block;
+  font-size: 1.6em;
+  color: {{ACCENT}};
+  margin-bottom: 4px;
+}
+.dbox p {
+  font-size: 0.85em;
+  color: #475569;
+  line-height: 1.4;
+}
+
+.diagram-arrow {
+  display: flex;
+  align-items: center;
+  padding: 0 4px;
+  font-size: 1.4em;
+  color: {{ACCENT}};
+  font-weight: bold;
+}
+
+/* === Section Break === */
+.section-break {
+  background: linear-gradient(135deg, {{PRIMARY}}, {{ACCENT}});
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.section-break h1 {
+  font-size: 2.4em;
+  margin-bottom: 10px;
+}
+.section-break p {
+  font-size: 1.2em;
+  opacity: 0.9;
+}
+
+/* === Cover Slide === */
+.cover-slide {
+  background: linear-gradient(135deg, {{PRIMARY}} 0%, {{ACCENT}} 100%);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.cover-slide h1 {
+  font-size: 2.8em;
+  margin-bottom: 8px;
+}
+.cover-slide .subtitle {
+  font-size: 1.3em;
+  opacity: 0.85;
+  margin-top: 8px;
+}
+
+/* === Utility === */
+.text-center { text-align: center; }
+.mt-20 { margin-top: 20px; }
+</style>
+</head>
+<body>
+
+<!-- ============================================ -->
+<!-- SLIDE 1: Cover                                -->
+<!-- ============================================ -->
+<div class="slide-container cover-slide">
+  <h1>{{DOCUMENT_TITLE}}</h1>
+  <p class="subtitle">{{SUBTITLE}}</p>
+</div>
+
+<!-- ============================================ -->
+<!-- SLIDE 2: Split Layout Example                 -->
+<!-- ============================================ -->
+<div class="slide-container">
+  <div class="slide-header">🔹 {{SECTION_TITLE}}</div>
+  <div class="slide-body">
+    <div class="split">
+      <div class="pbox left-bg">
+        <h2>🔹 หลักการ (Principle)</h2>
+        <ul>
+          <li>เนื้อหาหลักการข้อที่ 1</li>
+          <li>เนื้อหาหลักการข้อที่ 2</li>
+        </ul>
+      </div>
+      <div class="pbox right-bg">
+        <h2>📄 เอกสารที่ควรจัดเตรียม</h2>
+        <ul>
+          <li>เอกสารประกอบที่ 1</li>
+          <li>เอกสารประกอบที่ 2</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="slide-footer">
+    <span>{{FOOTER_TEXT}}</span>
+    <span>หน้า 2/{{TOTAL}}</span>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SLIDE 3: Diagram (4 Steps)                    -->
+<!-- ============================================ -->
+<div class="slide-container">
+  <div class="slide-header">🔹 ขั้นตอนการดำเนินงาน</div>
+  <div class="slide-body">
+    <div class="diagram-row">
+      <div class="dbox"><strong>1</strong><p>ขั้นตอนที่หนึ่ง</p></div>
+      <div class="diagram-arrow">→</div>
+      <div class="dbox"><strong>2</strong><p>ขั้นตอนที่สอง</p></div>
+      <div class="diagram-arrow">→</div>
+      <div class="dbox"><strong>3</strong><p>ขั้นตอนที่สาม</p></div>
+      <div class="diagram-arrow">→</div>
+      <div class="dbox"><strong>4</strong><p>ขั้นตอนที่สี่</p></div>
+    </div>
+  </div>
+  <div class="slide-footer">
+    <span>{{FOOTER_TEXT}}</span>
+    <span>หน้า 3/{{TOTAL}}</span>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SLIDE 4: Table                                -->
+<!-- ============================================ -->
+<div class="slide-container">
+  <div class="slide-header">🔹 ตารางข้อมูล</div>
+  <div class="slide-body">
+    <table class="data-table">
+      <thead>
+        <tr><th>หัวข้อ</th><th>รายละเอียด</th><th>หมายเหตุ</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>รายการที่ 1</td><td>คำอธิบาย</td><td>หมายเหตุ</td></tr>
+        <tr><td>รายการที่ 2</td><td>คำอธิบาย</td><td>หมายเหตุ</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="slide-footer">
+    <span>{{FOOTER_TEXT}}</span>
+    <span>หน้า 4/{{TOTAL}}</span>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SLIDE 5: Section Break                       -->
+<!-- ============================================ -->
+<div class="slide-container section-break">
+  <h1>ส่วนที่ 2</h1>
+  <p>หัวข้อใหม่ถัดไป</p>
+</div>
+
+</body>
+</html>
