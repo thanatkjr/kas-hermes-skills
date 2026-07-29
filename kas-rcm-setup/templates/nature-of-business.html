@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nature of Business — [COMPANY_NAME]</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
+  
+  :root {
+    --primary: #1a56db;
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --text: #1e293b;
+    --muted: #64748b;
+    --border: #e2e8f0;
+    --editable-border: #94a3b8;
+    --danger: #dc2626;
+  }
+  
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  body {
+    font-family: 'Sarabun', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 0;
+  }
+
+  /* ── Toolbar ── */
+  .toolbar {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 24px;
+    display: flex; gap: 12px; align-items: center;
+    flex-wrap: wrap;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  }
+  .toolbar button {
+    padding: 8px 18px; border: none; border-radius: 6px;
+    font-family: 'Sarabun', sans-serif; font-size: 14px; font-weight: 500;
+    cursor: pointer; transition: all .15s;
+  }
+  .btn-save { background: var(--primary); color: #fff; }
+  .btn-save:hover { background: #1e40af; }
+  .btn-print { background: #fff; color: var(--primary); border: 1px solid var(--primary); }
+  .btn-print:hover { background: #eff6ff; }
+  .btn-reset { background: #fff; color: var(--muted); border: 1px solid var(--border); }
+  .btn-reset:hover { background: #f1f5f9; }
+  .toolbar .title { font-weight: 600; font-size: 16px; margin-right: auto; }
+
+  /* ── Main ── */
+  .container { max-width: 960px; margin: 0 auto; padding: 32px 24px 80px; }
+
+  .header {
+    background: linear-gradient(135deg, #1e3a5f 0%, #1a56db 100%);
+    color: #fff; padding: 40px 32px; border-radius: 12px; margin-bottom: 32px;
+  }
+  .header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+  .header .subtitle { font-size: 16px; opacity: .85; }
+  .header .meta { margin-top: 16px; font-size: 13px; opacity: .7; }
+
+  /* ── Section Cards ── */
+  .section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px 28px;
+    margin-bottom: 20px;
+    page-break-inside: avoid;
+  }
+  .section h2 {
+    font-size: 18px; font-weight: 600; color: var(--primary);
+    margin-bottom: 6px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section h2 .num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: #eff6ff; color: var(--primary); font-size: 14px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .section .hint {
+    font-size: 13px; color: var(--muted); margin-bottom: 12px;
+  }
+
+  /* ── Editable ── */
+  .editable {
+    border-bottom: 1.5px dashed var(--editable-border);
+    padding: 4px 2px;
+    min-height: 24px;
+    outline: none;
+    transition: border-color .2s, background .2s;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .editable:focus {
+    border-bottom-color: var(--primary);
+    background: #f8faff;
+  }
+  .editable:empty::before {
+    content: 'คลิกเพื่อพิมพ์...';
+    color: #cbd5e1;
+    font-style: italic;
+  }
+
+  .editable-area {
+    border: 1px dashed var(--editable-border);
+    border-radius: 6px;
+    padding: 12px 14px;
+    min-height: 80px;
+    outline: none;
+    transition: border-color .2s, background .2s;
+    white-space: pre-wrap;
+    word-break: break-word;
+    background: #fafbfc;
+  }
+  .editable-area:focus {
+    border-color: var(--primary);
+    background: #f8faff;
+  }
+  .editable-area:empty::before {
+    content: 'คลิกเพื่อพิมพ์...';
+    color: #cbd5e1;
+    font-style: italic;
+  }
+
+  /* ── Appendix ── */
+  .appendix {
+    margin-top: 40px; border-top: 2px solid var(--border); padding-top: 24px;
+  }
+  .appendix h2 { font-size: 20px; color: var(--muted); margin-bottom: 16px; }
+  .appendix pre {
+    background: #f1f5f9; border-radius: 8px; padding: 16px;
+    font-size: 13px; line-height: 1.6; overflow-x: auto;
+    white-space: pre-wrap; word-break: break-word;
+    max-height: 400px; overflow-y: auto;
+  }
+
+  /* ── Print ── */
+  @media print {
+    .toolbar { display: none !important; }
+    body { background: #fff; }
+    .container { max-width: 100%; padding: 0; }
+    .section { break-inside: avoid; box-shadow: none; border: 1px solid #ddd; }
+    .header { background: #1e3a5f !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .editable, .editable-area { border-bottom-style: solid; border-color: #ccc; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════ TOOLBAR ═══════════ -->
+<div class="toolbar no-print">
+  <span class="title">📋 [COMPANY_NAME] — Nature of Business</span>
+  <button class="btn-reset" onclick="resetAll()">↺ คืนค่าเริ่มต้น</button>
+  <button class="btn-print" onclick="window.print()">🖨️ Print / PDF</button>
+  <button class="btn-save" onclick="saveHTML()">💾 Save as HTML</button>
+</div>
+
+<div class="container">
+
+<!-- ═══════════ HEADER ═══════════ -->
+<div class="header">
+  <h1>Nature of Business</h1>
+  <div class="subtitle" contenteditable="true" class="editable" style="color:#bfdbfe;border-bottom-color:#60a5fa;">
+    [ชื่อบริษัท]
+  </div>
+  <div class="meta">
+    จัดทำเมื่อ: <span contenteditable="true" class="editable" style="color:#bfdbfe;border-bottom-color:#60a5fa;">[DATE]</span>
+    &nbsp;|&nbsp; ผู้จัดทำ: <span contenteditable="true" class="editable" style="color:#bfdbfe;border-bottom-color:#60a5fa;">KAS</span>
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 1: สินค้า/บริการหลัก ═══════════ -->
+<div class="section">
+  <h2><span class="num">1</span> สินค้าและบริการหลัก</h2>
+  <p class="hint">ระบุสินค้าหรือบริการที่กิจการจำหน่าย — แบ่งเป็นกลุ่ม พร้อมสัดส่วนรายได้โดยประมาณ</p>
+  <div class="editable-area" contenteditable="true" data-original="">
+    [สินค้า/บริการหลักของกิจการ...]
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 2: ลูกค้าหลัก ═══════════ -->
+<div class="section">
+  <h2><span class="num">2</span> ลูกค้าหลัก</h2>
+  <p class="hint">ระบุกลุ่มลูกค้า — B2B / B2C / Government — ลูกค้ารายใหญ่ ช่องทางขาย</p>
+  <div class="editable-area" contenteditable="true" data-original="">
+    [ลักษณะลูกค้า, ช่องทางขาย, ลูกค้ารายใหญ่...]
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 3: ผู้ขาย/ผู้ให้บริการหลัก ═══════════ -->
+<div class="section">
+  <h2><span class="num">3</span> ผู้ขายและผู้ให้บริการหลัก</h2>
+  <p class="hint">ระบุวัตถุดิบ/สินค้า/บริการที่จัดซื้อ — vendor หลัก — วิธีการจัดซื้อ</p>
+  <div class="editable-area" contenteditable="true" data-original="">
+    [vendor หลัก, วัตถุดิบสำคัญ, วิธีการจัดซื้อ...]
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 4: รายได้และค่าใช้จ่ายหลัก ═══════════ -->
+<div class="section">
+  <h2><span class="num">4</span> รายได้และค่าใช้จ่ายหลัก</h2>
+  <p class="hint">ระบุแหล่งที่มาของรายได้ วิธีการรับชำระเงิน ค่าใช้จ่ายหลัก โครงสร้างต้นทุน</p>
+  <div class="editable-area" contenteditable="true" data-original="">
+    [รายได้หลัก, วิธีการรับชำระ, ค่าใช้จ่ายหลัก, โครงสร้างต้นทุน...]
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 5: รูปแบบการผลิต/ให้บริการ ═══════════ -->
+<div class="section">
+  <h2><span class="num">5</span> รูปแบบการผลิต / การให้บริการ</h2>
+  <p class="hint">ระบุกระบวนการผลิตหรือให้บริการ — การมีสต็อก — เครื่องจักร/อุปกรณ์สำคัญ</p>
+  <div class="editable-area" contenteditable="true" data-original="">
+    [กระบวนการผลิต/ให้บริการ, การบริหารสต็อก, เครื่องจักรสำคัญ...]
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 6: กฎหมาย/ข้อบังคับ/สัญญาสำคัญ ═══════════ -->
+<div class="section">
+  <h2><span class="num">6</span> กฎหมาย ข้อบังคับ และสัญญาสำคัญ</h2>
+  <p class="hint">ระบุกฎหมายที่เกี่ยวข้อง ใบอนุญาต มาตรฐานบังคับ สัญญาสำคัญกับคู่ค้า</p>
+  <div class="editable-area" contenteditable="true" data-original="">
+    [กฎหมาย, ใบอนุญาต, มาตรฐาน, สัญญาสำคัญ...]
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 7: ระบบ ERP/IT ═══════════ -->
+<div class="section">
+  <h2><span class="num">7</span> ระบบ ERP / IT ที่ใช้</h2>
+  <p class="hint">ระบุระบบ ERP และระบบ IT ต่างๆ — โมดูลที่ใช้ — ระบบบัญชี — ระบบ Payroll</p>
+  <div class="editable-area" contenteditable="true" data-original="">
+    [ระบบ ERP, โมดูล, ระบบบัญชี, ระบบ payroll, ระบบอื่นๆ...]
+  </div>
+</div>
+
+<!-- ═══════════ APPENDIX ═══════════ -->
+<div class="appendix">
+  <h2>📎 ภาคผนวก — ข้อมูลดิบ (Raw Data)</h2>
+  <p class="hint">ข้อมูลดิบที่ใช้ในการจัดทำรายงานนี้ — จากไฟล์ที่ผู้ใช้ให้มา หรือจากการสัมภาษณ์</p>
+  <details open>
+    <summary style="cursor:pointer;font-weight:600;margin-bottom:8px;">📄 nob_raw.txt</summary>
+    <pre contenteditable="false">[RAW_DATA_PLACEHOLDER]</pre>
+  </details>
+</div>
+
+</div><!-- /container -->
+
+<!-- ═══════════ SCRIPTS ═══════════ -->
+<script>
+// ── Save as HTML ──
+function saveHTML() {
+  const html = document.documentElement.outerHTML;
+  const blob = new Blob(['<!DOCTYPE html>\n' + html], {type: 'text/html'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const title = document.title.replace(/[^a-z0-9ก-๙]/gi, '_') || 'nob_summary';
+  a.href = url;
+  a.download = title + '.html';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── Reset to original values ──
+function resetAll() {
+  if (!confirm('คืนค่าทั้งหมดเป็นค่าเริ่มต้น? การแก้ไขจะหายไป')) return;
+  document.querySelectorAll('[data-original]').forEach(el => {
+    el.innerHTML = el.dataset.original;
+  });
+}
+
+// ── Auto-grow editable areas ──
+document.querySelectorAll('.editable-area').forEach(el => {
+  el.addEventListener('input', function() {
+    this.style.height = 'auto';
+    this.style.height = Math.max(80, this.scrollHeight) + 'px';
+  });
+});
+</script>
+
+</body>
+</html>

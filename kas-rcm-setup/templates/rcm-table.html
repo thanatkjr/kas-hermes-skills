@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Standard Risk Control Matrix — [COMPANY_NAME]</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap');
+  
+  :root {
+    --primary: #1a56db; --bg: #f8fafc; --card: #ffffff; --text: #1e293b;
+    --muted: #64748b; --border: #e2e8f0; --green: #16a34a; --amber: #d97706; --red: #dc2626;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Sarabun', sans-serif; background: var(--bg); color: var(--text);
+    line-height: 1.6; font-size: 14px;
+  }
+
+  /* Toolbar */
+  .toolbar {
+    position: sticky; top: 0; z-index: 100; background: var(--card);
+    border-bottom: 1px solid var(--border); padding: 10px 20px;
+    display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06);
+  }
+  .toolbar .title { font-weight: 600; font-size: 15px; margin-right: auto; }
+  .toolbar button {
+    padding: 7px 16px; border: none; border-radius: 6px;
+    font-family: 'Sarabun', sans-serif; font-size: 13px; font-weight: 500; cursor: pointer;
+  }
+  .btn-save { background: var(--primary); color: #fff; }
+  .btn-save:hover { background: #1e40af; }
+  .btn-print { background: #fff; color: var(--primary); border: 1px solid var(--primary); }
+  .btn-print:hover { background: #eff6ff; }
+  .btn-add { background: #16a34a; color: #fff; }
+  .btn-add:hover { background: #15803d; }
+  .btn-del { background: #fff; color: var(--red); border: 1px solid var(--red); }
+  .btn-del:hover { background: #fef2f2; }
+
+  /* Container */
+  .container { max-width: 100%; margin: 0; padding: 20px 16px 80px; }
+
+  .header {
+    background: linear-gradient(135deg, #1e3a5f 0%, #1a56db 100%);
+    color: #fff; padding: 28px 24px; border-radius: 10px; margin-bottom: 24px;
+  }
+  .header h1 { font-size: 24px; font-weight: 700; }
+  .header .subtitle { font-size: 14px; opacity: .85; margin-top: 4px; }
+
+  /* Summary bar */
+  .summary-bar {
+    display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap;
+  }
+  .summary-card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 8px;
+    padding: 14px 20px; text-align: center; min-width: 100px; flex: 1;
+  }
+  .summary-card .count { font-size: 28px; font-weight: 700; }
+  .summary-card .label { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .summary-card.covered .count { color: var(--green); }
+  .summary-card.partial .count { color: var(--amber); }
+  .summary-card.gap .count { color: var(--red); }
+
+  /* Table */
+  .table-wrap { overflow-x: auto; border-radius: 8px; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; min-width: 1400px; }
+  thead { position: sticky; top: 56px; z-index: 10; }
+  th {
+    background: #f1f5f9; font-weight: 600; font-size: 12px; text-transform: uppercase;
+    letter-spacing: .5px; color: var(--muted); padding: 10px 12px;
+    border-bottom: 2px solid var(--border); text-align: left; white-space: nowrap;
+  }
+  td {
+    padding: 10px 12px; border-bottom: 1px solid var(--border);
+    vertical-align: top; font-size: 13px;
+  }
+  tr:hover td { background: #f8fafc; }
+  tr:last-child td { border-bottom: none; }
+
+  /* Editable cells */
+  td[contenteditable="true"] {
+    border-bottom: 1px dashed #cbd5e1; outline: none; min-width: 180px;
+    white-space: pre-wrap; word-break: break-word;
+    transition: background .15s;
+  }
+  td[contenteditable="true"]:focus {
+    background: #f8faff; border-bottom-color: var(--primary);
+  }
+  td[contenteditable="true"]:empty::before {
+    content: '—'; color: #cbd5e1;
+  }
+
+  /* Status badges */
+  .badge {
+    display: inline-block; padding: 3px 10px; border-radius: 12px;
+    font-size: 12px; font-weight: 600;
+  }
+  .badge-covered { background: #dcfce7; color: #166534; }
+  .badge-partial { background: #fef3c7; color: #92400e; }
+  .badge-gap { background: #fee2e2; color: #991b1b; }
+
+  /* Dropdown in table */
+  td select {
+    font-family: 'Sarabun', sans-serif; font-size: 12px; padding: 4px 8px;
+    border-radius: 4px; border: 1px solid var(--border); background: #fff;
+  }
+
+  /* Appendix */
+  .appendix {
+    margin-top: 32px; border-top: 2px solid var(--border); padding-top: 20px;
+  }
+  .appendix h2 { font-size: 18px; color: var(--muted); margin-bottom: 12px; }
+  .appendix pre {
+    background: #f1f5f9; border-radius: 8px; padding: 14px;
+    font-size: 12px; line-height: 1.5; overflow-x: auto;
+    white-space: pre-wrap; word-break: break-word; max-height: 350px; overflow-y: auto;
+  }
+
+  @media print {
+    .toolbar, .btn-add, .btn-del { display: none !important; }
+    body { background: #fff; }
+    .container { max-width: 100%; padding: 0; }
+    .header { background: #1e3a5f !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    thead { position: static; }
+    td[contenteditable="true"] { border-bottom-style: solid; border-color: #ccc; }
+    .table-wrap { overflow-x: visible; }
+    table { page-break-inside: auto; }
+    tr { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar no-print">
+  <span class="title">📊 [TITLE] — [COMPANY_NAME] | Process: [PROCESS]</span>
+  <button class="btn-add" onclick="addRow()">➕ เพิ่มแถว</button>
+  <button class="btn-del" onclick="deleteSelected()">🗑️ ลบแถวที่เลือก</button>
+  <button class="btn-print" onclick="window.print()">🖨️ Print / PDF</button>
+  <button class="btn-save" onclick="saveHTML()">💾 Save as HTML</button>
+</div>
+
+<div class="container">
+
+<div class="header">
+  <h1>[TITLE]</h1>
+  <div class="subtitle" contenteditable="true" style="color:#bfdbfe;border-bottom:1px dashed #60a5fa;padding:2px 4px;">
+    [COMPANY_NAME] — Process: [PROCESS]
+  </div>
+</div>
+
+<!-- Summary -->
+<div class="summary-bar" id="summaryBar">
+  <div class="summary-card"><div class="count" id="totalCount">0</div><div class="label">รายการทั้งหมด</div></div>
+  <div class="summary-card covered"><div class="count" id="coveredCount">0</div><div class="label">✅ Covered</div></div>
+  <div class="summary-card partial"><div class="count" id="partialCount">0</div><div class="label">⚠️ Partial</div></div>
+  <div class="summary-card gap"><div class="count" id="gapCount">0</div><div class="label">🔴 Gap</div></div>
+</div>
+
+<!-- ═══════════ RCM TABLE ═══════════ -->
+<div class="table-wrap">
+<table id="rcmTable">
+<thead>
+  <tr>
+    <th style="width:30px;">#</th>
+    <th style="width:30px;">✓</th>
+    <th style="min-width:160px;">กิจกรรม</th>
+    <th style="min-width:200px;">ความเสี่ยง</th>
+    <th style="min-width:220px;">การควบคุมที่ควรมี</th>
+    <th style="min-width:220px;">การควบคุมที่มีอยู่</th>
+    <th style="width:90px;">สถานะ</th>
+    <th style="min-width:220px;">วิธีการตรวจสอบ</th>
+    <th style="min-width:180px;">คำถามสัมภาษณ์</th>
+    <th style="width:80px;">Poison</th>
+  </tr>
+</thead>
+<tbody>
+  <!-- Rows inserted here -->
+</tbody>
+</table>
+</div>
+
+<!-- ═══════════ APPENDIX ═══════════ -->
+<div class="appendix">
+  <h2>📎 ภาคผนวก — ข้อมูลดิบ</h2>
+  <details>
+    <summary style="cursor:pointer;font-weight:600;">📄 Raw MCP Output</summary>
+    <pre id="appendixMCP">[MCP_RAW_DATA]</pre>
+  </details>
+  <details style="margin-top:12px;">
+    <summary style="cursor:pointer;font-weight:600;">📄 Existing Controls (จาก user)</summary>
+    <pre id="appendixExisting">[EXISTING_CONTROLS_RAW]</pre>
+  </details>
+</div>
+
+</div>
+
+<script>
+// ── Save ──
+function saveHTML() {
+  const html = document.documentElement.outerHTML;
+  const blob = new Blob(['<!DOCTYPE html>\n' + html], {type: 'text/html'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = document.title.replace(/[^a-z0-9ก-๙]/gi, '_') + '.html';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── Add row ──
+function addRow() {
+  const tbody = document.querySelector('#rcmTable tbody');
+  const rowCount = tbody.children.length + 1;
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td>${rowCount}</td>
+    <td><input type="checkbox" class="row-select" onchange="updateStatus()"></td>
+    <td contenteditable="true"></td>
+    <td contenteditable="true"></td>
+    <td contenteditable="true"></td>
+    <td contenteditable="true"></td>
+    <td>
+      <select onchange="updateStatus(); updateSummary();">
+        <option value="">—</option>
+        <option value="covered">✅ Covered</option>
+        <option value="partial">⚠️ Partial</option>
+        <option value="gap">🔴 Gap</option>
+      </select>
+    </td>
+    <td contenteditable="true"></td>
+    <td contenteditable="true"></td>
+    <td contenteditable="true"></td>
+  `;
+  tbody.appendChild(tr);
+  renumberRows();
+  updateSummary();
+}
+
+// ── Delete selected ──
+function deleteSelected() {
+  const checks = document.querySelectorAll('.row-select:checked');
+  if (checks.length === 0) { alert('เลือกแถวที่ต้องการลบก่อน (ติ๊ก checkbox)'); return; }
+  if (!confirm(`ลบ ${checks.length} แถว?`)) return;
+  checks.forEach(cb => cb.closest('tr').remove());
+  renumberRows();
+  updateSummary();
+}
+
+// ── Renumber ──
+function renumberRows() {
+  document.querySelectorAll('#rcmTable tbody tr').forEach((tr, i) => {
+    tr.children[0].textContent = i + 1;
+  });
+}
+
+// ── Update summary ──
+function updateSummary() {
+  let total = 0, covered = 0, partial = 0, gap = 0;
+  document.querySelectorAll('#rcmTable tbody select').forEach(sel => {
+    total++;
+    if (sel.value === 'covered') covered++;
+    else if (sel.value === 'partial') partial++;
+    else if (sel.value === 'gap') gap++;
+  });
+  document.getElementById('totalCount').textContent = total;
+  document.getElementById('coveredCount').textContent = covered;
+  document.getElementById('partialCount').textContent = partial;
+  document.getElementById('gapCount').textContent = gap;
+}
+
+function updateStatus() { /* hook for status update */ }
+
+// ── Init ──
+document.addEventListener('DOMContentLoaded', () => {
+  if (document.querySelectorAll('#rcmTable tbody tr').length === 0) {
+    // add 1 empty row if table is empty
+    addRow();
+  }
+  updateSummary();
+});
+</script>
+
+</body>
+</html>
