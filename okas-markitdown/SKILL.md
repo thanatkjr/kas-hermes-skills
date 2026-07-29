@@ -1,16 +1,16 @@
 ---
-name: kas-markitdown
-description: "Use when user uploads or attaches any file (PDF, DOCX, PPTX, XLSX, HTML, images, audio) — smart-convert to Markdown with the optimal engine per format. PDF: pymupdf for Thai (clean, no artifacts) + OCR fallback for scans. Office: markitdown. Images: OCR. Token-efficient. KAS skill."
+name: okas-markitdown
+description: "Use when user uploads or attaches any file (PDF, DOCX, PPTX, XLSX, HTML, images, audio) — smart-convert to Markdown with the optimal engine per format. PDF: pymupdf for Thai (clean, no artifacts) + OCR fallback for scans. Office: markitdown. Images: OCR. Token-efficient. OKAS skill."
 version: 2.0.0
-author: KAS (Kandit Advisory Services)
+author: OKAS (Kandit Advisory Services)
 license: MIT
 metadata:
   hermes:
-    tags: [file-conversion, markitdown, pymupdf, ocr, tesseract, token-saving, document-processing, KAS]
-    related_skills: [token-efficient, kas-guard]
+    tags: [file-conversion, markitdown, pymupdf, ocr, tesseract, token-saving, document-processing, OKAS]
+    related_skills: [token-efficient, okas-guard]
 ---
 
-# KAS Smart File → Markdown Converter
+# OKAS Smart File → Markdown Converter
 
 แปลงไฟล์ที่ user upload/แนบเป็น Markdown ด้วย engine ที่เหมาะสมที่สุดต่อรูปแบบ — **pymupdf สำหรับ PDF (ภาษาไทยสะอาด ไม่มี cid artifacts)**, markitdown สำหรับ Office, OCR สำหรับรูปภาพและ PDF scan
 
@@ -77,7 +77,7 @@ import subprocess, json, os
 env = os.environ.copy()
 env["PATH"] = env.get("PATH", "") + r";C:\Program Files\Tesseract-OCR"
 
-script = r"C:\Users\ASUS\AppData\Local\hermes\skills\productivity\kas-markitdown\scripts\smart_convert.py"
+script = r"C:\Users\ASUS\AppData\Local\hermes\skills\productivity\okas-markitdown\scripts\smart_convert.py"
 
 result = subprocess.run(
     ["python", script, r"path/to/file.pdf"],

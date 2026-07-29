@@ -1,7 +1,7 @@
 ---
-name: kas-google-search-v2
-description: "KAS Google Search V2 — สอนติดตั้ง Google API Key แบบ Step-by-Step + ค้นหาคุณภาพสูงมีแหล่งอ้างอิง ห้ามมั่ว"
-version: 2.0.0
+name: okas-google-search-v2
+description: "OKAS Google Search V2 — สอนติดตั้ง Google API Key แบบ Step-by-Step + ค้นหาคุณภาพสูงมีแหล่งอ้างอิง ห้ามมั่ว"
+version: 2.1.0
 author: Thanat Kerdcharoen
 license: MIT
 metadata:
@@ -9,7 +9,7 @@ metadata:
     tags: [search, web, grounding, gemini, google, setup]
 ---
 
-# KAS Google Search V2 🔍
+# OKAS Google Search V2 🔍
 
 > **สืบทอดจาก v1 — ปรับปรุงให้สมบูรณ์แบบ:** setup แบบมี verify, key ไม่หาย, ค้นหาคุณภาพสูงเท่าเดิม
 
@@ -30,7 +30,7 @@ metadata:
 ## 🔑 เมื่อ Key พร้อมใช้
 
 ```bash
-cd "$HOME/AppData/Local/hermes/skills/kas-google-search/kas-google-search-v2/scripts"
+cd "$HOME/AppData/Local/hermes/skills/kas-google-search/okas-google-search-v2/scripts"
 python google_search.py "คำค้นหาที่นี่"
 ```
 
@@ -88,7 +88,11 @@ python google_search.py "คำค้นหาที่นี่"
 
 ⚠️ **กดปุ่ม Copy ทันที** — แสดงครั้งเดียว! ปิดแล้วหาย → ต้องสร้างใหม่
 
-ตัวอย่าง: `AIzaSy...ยาวๆ...`
+📌 **Key มี 2 รูปแบบ:**
+- `AIzaSy...` — จาก AI Studio (aistudio.google.com) — ใช้ได้กับ Free Tier
+- `AQ.Ab8...` — จาก Google Cloud OAuth — ใช้ได้กับ billing account
+
+ทั้งสองแบบใช้ได้กับสคริปต์นี้
 
 ### ขั้นที่ 5: ให้ Agent ติดตั้งให้
 
@@ -130,10 +134,23 @@ Agent ใช้ script `setup_key.py` — ซึ่งจะ:
 
 | Error | สาเหตุ | วิธีแก้ |
 |-------|--------|--------|
+| `404 Not Found` | โมเดลถูกยกเลิก (deprecated) | สคริปต์ v2.1+ มี fallback อัตโนมัติ → อัปเดตสคริปต์เป็นเวอร์ชันล่าสุด |
 | `403 PERMISSION_DENIED` | Key ผิด / ยังไม่ activate | สร้าง key ใหม่ที่ https://aistudio.google.com/apikey |
-| `429 Quota exceeded` | ใช้เกิน Free Tier (1,500/day) | รอวันถัดไป หรือสร้าง key ใหม่ (คนละ project) |
+| `429 Quota exceeded` | ใช้เกิน Free Tier หรือ billing ยังไม่ active | ถ้าไม่มี billing → รอวันถัดไป; ถ้ามี billing → เช็ค quota ใน Cloud Console |
 | `503 Unavailable` | Server ล่มชั่วคราว | รอ 1-2 นาที แล้วลองใหม่ |
 | `ไม่พบ API Key` | ยังไม่ได้ติดตั้ง | พาผู้ใช้ติดตั้งตาม Part 2 |
+
+## 🔥 CRITICAL: การเปิด Billing ทำ Free Tier หาย
+
+**"Once billing is enabled → free tier disappears → all calls become billable"** [google.dev]
+
+| Key Type | Free Tier | Models | Cost |
+|----------|:---------:|--------|------|
+| **Old key (ไม่มี billing)** | ✅ 1,500 req/day | `gemini-2.5-flash` | $0 |
+| **New key (เปิด billing แล้ว)** | ❌ billable | `gemini-3.6-flash` | ~$0.004/req |
+
+> ⚠️ **ถ้า key ปัจจุบันยังใช้ได้ (ไม่มี billing) — อย่าเปิด billing!** ใช้ต่อไปฟรี
+> ดูรายละเอียดเพิ่มเติม: `references/model-maintenance.md`
 
 ---
 
@@ -166,10 +183,20 @@ Agent ใช้ script `setup_key.py` — ซึ่งจะ:
 | `scripts/google_search.py` | ค้นหาด้วย Gemini + Google Search Grounding (เหมือน v1) |
 | `scripts/setup_key.py` | ติดตั้ง + ตรวจสอบ API Key |
 
+## 📚 References
+
+| File | เนื้อหา |
+|------|--------|
+| `references/model-maintenance.md` | วิธีตรวจสอบ model availability + lifecycle |
+
 ## Free Tier
 
-| Model | ต่อวัน | ต่อนาที |
-|-------|:------:|:------:|
-| Gemini 2.5 Flash | 1,500 req | 15 req |
+| Model | Key Type | ต่อวัน | Cost |
+|-------|----------|:------:|------|
+| `gemini-2.5-flash` | Old key (no billing) | 1,500 req | $0 |
+| `gemini-3.6-flash` | New key (billing) | unlimited* | ~$0.004/req |
+| `gemini-2.0-flash` | Old key (no billing) | 1,500 req | $0 |
 
-ใช้ `gemini-2.5-flash` — ฟรี เพียงพอสำหรับการค้นหาปกติ
+> ⚠️ **เปิด billing → free tier หายตลอดกาล** — อย่าเปิดถ้า key เดิมยังใช้ได้!
+> 
+> สคริปต์ v2.1+ มี fallback อัตโนมัติ — ถ้า model แรกใช้ไม่ได้จะลอง model ถัดไป

@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{TITLE}} | {{PROJECT}}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Sarabun', 'Tahoma', sans-serif;
+    background: #f5f5f5;
+    color: #333;
+    line-height: 1.6;
+  }
+  .header {
+    background: linear-gradient(135deg, #1a3a4a 0%, #2d6a4f 100%);
+    color: white;
+    padding: 20px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .header h1 { font-size: 1.4em; font-weight: 600; }
+  .header .sub { font-size: 0.85em; opacity: 0.85; margin-top: 4px; }
+  .header .date { font-size: 0.9em; opacity: 0.8; }
+
+  .container { max-width: 1500px; margin: 0 auto; padding: 20px; }
+
+  .toolbar {
+    display: flex; gap: 10px; margin-bottom: 15px;
+    align-items: center; flex-wrap: wrap;
+  }
+  .btn {
+    padding: 8px 20px; border: none; border-radius: 6px;
+    cursor: pointer; font-size: 0.9em; font-weight: 600;
+    transition: all 0.2s;
+  }
+  .btn-save { background: #2d6a4f; color: white; }
+  .btn-save:hover { background: #1b4332; }
+  .btn-export { background: #1a3a4a; color: white; }
+  .btn-export:hover { background: #0d1f2d; }
+  .btn-txt { background: #6c757d; color: white; }
+  .btn-txt:hover { background: #495057; }
+  .btn-clear { background: #e9ecef; color: #495057; }
+  .btn-clear:hover { background: #ced4da; }
+  .save-status { font-size: 0.85em; color: #2d6a4f; font-weight: 600; }
+
+  table.agenda {
+    width: 100%; border-collapse: collapse;
+    background: white; border-radius: 8px;
+    overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  thead th {
+    background: #1a3a4a; color: white; padding: 14px 16px;
+    text-align: left; font-weight: 600; font-size: 0.95em;
+  }
+  thead th:first-child { width: 50%; }
+  thead th:last-child { width: 50%; }
+
+  tbody td {
+    padding: 14px 18px; vertical-align: top;
+    border-bottom: 1px solid #e9ecef;
+  }
+  tbody tr:hover { background: #f8f9fa; }
+  tbody tr:last-child td { border-bottom: none; }
+
+  .topic-num {
+    display: inline-block; width: 28px; height: 28px;
+    background: #2d6a4f; color: white; border-radius: 50%;
+    text-align: center; line-height: 28px; font-size: 0.8em;
+    font-weight: 700; margin-right: 8px; flex-shrink: 0;
+  }
+  .topic-title {
+    font-weight: 700; font-size: 1em; color: #1a3a4a;
+    margin-bottom: 8px;
+  }
+  .topic-detail {
+    font-size: 0.85em; color: #495057; margin-left: 36px;
+  }
+  .topic-detail ul, .topic-detail ol { margin: 4px 0; padding-left: 20px; }
+  .topic-detail li { margin-bottom: 4px; }
+  .sub-label {
+    display: inline-block; background: #e8f5e9; color: #2d6a4f;
+    padding: 1px 6px; border-radius: 3px; font-size: 0.8em;
+    font-weight: 700; margin-right: 4px;
+  }
+  .highlight {
+    background: #fff3cd; padding: 1px 4px; border-radius: 2px;
+    font-weight: 600;
+  }
+
+  .finding-area {
+    width: 100%; min-height: 100px;
+    border: 2px dashed #ced4da; border-radius: 6px;
+    padding: 10px 12px; font-family: inherit; font-size: 0.9em;
+    color: #333; resize: vertical; background: #fafafa;
+    transition: border-color 0.2s;
+  }
+  .finding-area:focus {
+    outline: none; border-color: #2d6a4f;
+    background: #fff; box-shadow: 0 0 0 3px rgba(45,106,79,0.1);
+  }
+  .finding-area.has-content {
+    border-style: solid; border-color: #2d6a4f; background: #f0faf4;
+  }
+  .finding-label {
+    font-size: 0.75em; color: #6c757d; margin-bottom: 4px;
+    font-weight: 600;
+  }
+
+  .footer {
+    text-align: center; color: #6c757d; font-size: 0.8em;
+    margin-top: 30px; padding: 15px;
+  }
+
+  @media print {
+    .toolbar, .btn { display: none; }
+    .finding-area { border: 1px solid #ccc; min-height: 60px; }
+    .header { background: #1a3a4a !important; -webkit-print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>{{HEADER_EMOJI}} {{TITLE}}</h1>
+    <div class="sub">{{PROJECT}} · {{DEPARTMENT}}</div>
+  </div>
+  <div class="date">{{DATE_THAI}}</div>
+</div>
+
+<div class="container">
+  <div class="toolbar">
+    <button class="btn btn-save" onclick="saveData()">💾 Save</button>
+    <button class="btn btn-export" onclick="exportHTML()">📥 Export HTML</button>
+    <button class="btn btn-txt" onclick="exportTXT()">📄 Export TXT</button>
+    <button class="btn btn-clear" onclick="clearAll()">🗑️ ล้างทั้งหมด</button>
+    <span id="saveStatus" class="save-status"></span>
+  </div>
+
+  <table class="agenda">
+    <thead>
+      <tr>
+        <th>📌 ประเด็น / Agenda</th>
+        <th>🔍 ข้อตรวจพบสำคัญ (Key Findings)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{TABLE_ROWS}}
+    </tbody>
+  </table>
+
+  <div class="footer">
+    Hermes Agent · {{PROJECT}} · {{FOOTER_TEXT}} · {{DATE_THAI}}
+  </div>
+</div>
+
+<script>
+  const STORAGE_KEY = '{{STORAGE_KEY}}';
+
+  // --- Load saved data ---
+  function loadData() {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const data = JSON.parse(saved);
+        document.querySelectorAll('.finding-area').forEach(ta => {
+          const topic = ta.getAttribute('data-topic');
+          if (data[topic]) {
+            ta.value = data[topic];
+            ta.classList.add('has-content');
+          }
+        });
+      }
+    } catch(e) { console.warn('Load failed:', e); }
+  }
+
+  // --- Mark textareas with content ---
+  document.addEventListener('input', function(e) {
+    if (e.target.classList.contains('finding-area')) {
+      e.target.classList.toggle('has-content', !!e.target.value.trim());
+    }
+  });
+
+  // --- Get all data as object ---
+  function getData() {
+    const data = {};
+    document.querySelectorAll('.finding-area').forEach(ta => {
+      data[ta.getAttribute('data-topic')] = ta.value;
+    });
+    return data;
+  }
+
+  // --- Topic labels for export ---
+  const LABELS = {{LABELS_JSON}};
+
+  // --- Save to localStorage ---
+  function saveData() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(getData()));
+    const status = document.getElementById('saveStatus');
+    const now = new Date().toLocaleTimeString('th-TH');
+    status.textContent = '✅ บันทึกแล้ว ' + now;
+    setTimeout(() => { status.textContent = ''; }, 3000);
+  }
+
+  // --- Export as HTML ---
+  function exportHTML() {
+    saveData();
+    const clone = document.documentElement.cloneNode(true);
+    const originalAreas = document.querySelectorAll('.finding-area');
+    const cloneAreas = clone.querySelectorAll('.finding-area');
+    originalAreas.forEach((orig, i) => {
+      if (cloneAreas[i]) {
+        cloneAreas[i].textContent = orig.value;
+        cloneAreas[i].classList.add('has-content');
+      }
+    });
+    const cloneStatus = clone.querySelector('#saveStatus');
+    if (cloneStatus) cloneStatus.textContent = '';
+    const html = '<!DOCTYPE html>\n' + clone.outerHTML;
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = '{{EXPORT_FILENAME}}.html';
+    a.click();
+    URL.revokeObjectURL(url);
+    document.getElementById('saveStatus').textContent = '📥 Export HTML แล้ว';
+    setTimeout(() => { document.getElementById('saveStatus').textContent = ''; }, 3000);
+  }
+
+  // --- Export as TXT ---
+  function exportTXT() {
+    saveData();
+    const data = getData();
+    let txt = '================================================================\n';
+    txt += '{{PROJECT}} — {{TITLE}}\n';
+    txt += 'วันที่: {{DATE_THAI}}\n';
+    txt += '================================================================\n\n';
+
+    for (const [topic, label] of Object.entries(LABELS)) {
+      txt += '────────────────────────────────────────────────────────────────\n';
+      txt += topic + '. ' + label + '\n';
+      txt += '────────────────────────────────────────────────────────────────\n\n';
+      if (data[topic] && data[topic].trim()) {
+        txt += 'ข้อตรวจพบสำคัญ:\n';
+        txt += data[topic].trim() + '\n\n';
+      } else {
+        txt += '(ยังไม่ได้บันทึกข้อตรวจพบ)\n\n';
+      }
+    }
+
+    const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = '{{EXPORT_FILENAME}}.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+    document.getElementById('saveStatus').textContent = '📄 Export TXT แล้ว';
+    setTimeout(() => { document.getElementById('saveStatus').textContent = ''; }, 3000);
+  }
+
+  // --- Clear all ---
+  function clearAll() {
+    if (!confirm('ล้างข้อความทั้งหมดในช่องข้อตรวจพบ? การกระทำนี้ไม่สามารถเรียกคืนได้')) return;
+    document.querySelectorAll('.finding-area').forEach(ta => {
+      ta.value = '';
+      ta.classList.remove('has-content');
+    });
+    localStorage.removeItem(STORAGE_KEY);
+    document.getElementById('saveStatus').textContent = '';
+  }
+
+  // --- Init ---
+  loadData();
+</script>
+
+</body>
+</html>

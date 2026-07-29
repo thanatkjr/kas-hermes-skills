@@ -1,5 +1,5 @@
 ---
-name: kas-master-context
+name: xkas-master-context
 description: |
   สร้าง Master Context สำหรับกระบวนการทางธุรกิจ (Internal Audit) —
   ครอบคลุม: ขั้นตอนปฏิบัติงาน (ละเอียด), กฎ/การตัดสินใจ,
@@ -23,7 +23,7 @@ triggers:
 > 
 > ---
 
-# KAS Master Context
+# XKAS Master Context
 
 เครื่องมือสำหรับ Internal Auditor ใช้สร้างเอกสาร Master Context ของกระบวนการธุรกิจ
 โดยประเมินความเสี่ยง กิจกรรมควบคุม และวิธีการตรวจสอบอย่างเป็นระบบ

@@ -1,17 +1,17 @@
 ---
-name: kas-note
-description: Use when the user wants to record interview/meeting notes for internal audit work — collecting raw data piece by piece, classifying into audit categories (Policy/Procedure/Incident/Risk/General Info/Other), generating editable HTML notes, and compiling structured reports. Also supports merging multiple note versions (Synchronize). Triggers on phrases like "เริ่มบันทึก", "note taking", "interview notes", "บันทึกการสัมภาษณ์", "ผสาน", "sync", or any audit note-taking request. Protected by KAS guard.
+name: xkas-note
+description: Use when the user wants to record interview/meeting notes for internal audit work — collecting raw data piece by piece, classifying into audit categories (Policy/Procedure/Incident/Risk/General Info/Other), generating editable HTML notes, and compiling structured reports. Also supports merging multiple note versions (Synchronize). Triggers on phrases like "เริ่มบันทึก", "note taking", "interview notes", "บันทึกการสัมภาษณ์", "ผสาน", "sync", "บันทึกนะ", "รอให้จดครบ", "ประมวลผล", "ข้อมูลดิบ", or any pattern where the user feeds raw interview/fieldwork data piece-by-piece with intent to process later. Protected by OKAS guard.
 version: 2.0.0
-author: Thanat Kerdcharoen (KAS)
-license: Proprietary — KAS Internal Use Only
+author: Thanat Kerdcharoen (XKAS)
+license: Proprietary — XKAS Internal Use Only
 platforms: [windows]
 metadata:
   hermes:
-    tags: [kas, internal-audit, note-taking, interview, classification, report, sync]
-    related_skills: [kas-guard, kas-master-context]
+    tags: [xkas, internal-audit, note-taking, interview, classification, report, sync]
+    related_skills: [okas-guard, xkas-master-context]
 ---
 
-# KAS Note — Internal Audit Interview Notes
+# XKAS Note — Internal Audit Interview Notes
 
 ## Overview
 
@@ -210,6 +210,10 @@ Use same 10-section structure but add a "แหล่งที่มา" (Source
 5. **Forgetting RECORDER in report filename** — always append 4-char code
 6. **Merging notes from different topics** — only merge notes with matching topic keywords
 7. **Losing source attribution in merge** — always preserve which note each piece came from
+8. **Not loading kas-note on implicit triggers** — if user says any variant of "I'm going to record/jot this down, process later" (e.g., "ฉันจะบันทึกนะ รอให้จดครบก่อนค่อยประมวลผล"), load this skill IMMEDIATELY even without the exact keyword "เริ่มบันทึก". Do NOT process or analyze raw data without this skill loaded.
+9. **Over-thinking project inference** — Company = active Hermes Project name (e.g., COTCO). Do NOT switch projects or second-guess; the user knows which project they're in.
+10. **TUI input loss (common on Windows)** — User messages occasionally show as empty/lost, especially when typing large amounts. Mitigation: during Phase 2 (recording), save EVERY chunk to the raw file IMMEDIATELY — do not batch or wait for "done." If data is lost: acknowledge the frustration, show the user exactly what WAS saved (read last lines of the file), and ask them to re-provide only what's missing. Never make them re-type everything.
+11. **Meeting prep pattern (non-interview)** — When user is preparing materials for a client meeting (not an interview), this is a separate workflow. See `references/meeting-prep-html.md`. Create an interactive HTML with agenda items on the left and editable findings textareas on the right — with save/export buttons. Do NOT use the Phase 1–5 interview flow for meeting prep.
 
 ## Verification Checklist
 

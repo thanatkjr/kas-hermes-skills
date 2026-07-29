@@ -1,5 +1,5 @@
 ---
-name: kas-model-routing
+name: okas-model-routing
 description: "ตั้งค่า model routing: DeepSeek V4 Pro เป็นหลัก, Gemini Flash สำหรับ PDF/vision/delegation — ประหยัดค่าใช้จ่าย 97% สำหรับงานอ่านเอกสาร"
 version: 1.0.0
 author: Thanat
@@ -21,7 +21,7 @@ metadata:
 > 
 > ---
 
-# KAS Model Routing Setup (v3)
+# OKAS Model Routing Setup (v3)
 
 ตั้งค่าให้ Hermes เลือก model อัตโนมัติตามประเภทงาน:
 

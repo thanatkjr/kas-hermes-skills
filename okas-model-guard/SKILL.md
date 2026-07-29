@@ -1,5 +1,5 @@
 ---
-name: kas-model-guard
+name: okas-model-guard
 description: "Guard against accidental MoA / misconfiguration — verify model setup, disable MoA, check costs"
 version: 1.0.0
 author: Thanat
@@ -21,7 +21,7 @@ metadata:
 > 
 > ---
 
-# KAS Model Guard
+# OKAS Model Guard
 
 ตรวจสอบและป้องกันการตั้งค่า model ที่ผิดพลาดซึ่งทำให้ค่าใช้จ่ายพุ่ง
 
