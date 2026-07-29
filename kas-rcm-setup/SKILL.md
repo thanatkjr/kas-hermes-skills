@@ -7,7 +7,7 @@ license: Proprietary — KAS Internal Use Only
 metadata:
   hermes:
     tags: [kas, internal-audit, rcm, mcp, risk-control-matrix, audit-program]
-    related_skills: [kas-guard, kas-note, kas-markitdown, kas-htmlformat]
+    related_skills: [okas-guard, xkas-note, okas-markitdown, kas-htmlformat]
 ---
 
 # KAS RCM Setup & Audit Workbench
@@ -209,7 +209,7 @@ hermes mcp test rcm
 
 **Option B: รับไฟล์ที่ user upload**
 
-1. User upload ไฟล์ (PDF, DOCX, TXT) → ใช้ `kas-markitdown` skill แปลงเป็น text
+1. User upload ไฟล์ (PDF, DOCX, TXT) → ใช้ `okas-markitdown` skill แปลงเป็น text
 2. อ่านเนื้อหาทั้งหมด → สกัดประเด็นตาม 7 หัวข้อ
 3. ถ้าข้อมูลไม่ครบ → ถามเฉพาะหัวข้อที่ขาด
 
@@ -361,11 +361,11 @@ mcp_rcm_get_activity(process_code="P", activity_code="P-UNVS-001")
 User ต้องให้ข้อมูล "การควบคุมที่มีอยู่" — มาในรูปแบบ:
 
 **Option A: txt file จาก note skill**
-- User สร้าง note ด้วย `kas-note` skill → ได้ txt file
+- User สร้าง note ด้วย `xkas-note` skill → ได้ txt file
 - อ่านไฟล์ → สกัดเอา existing controls
 
 **Option B: ไฟล์อื่นที่ user upload**
-- User upload PDF/DOCX/TXT → แปลงด้วย `kas-markitdown` → อ่าน controls
+- User upload PDF/DOCX/TXT → แปลงด้วย `okas-markitdown` → อ่าน controls
 
 **Option C: User พิมพ์/บอกโดยตรง**
 - ถามทีละ activity → user อธิบาย existing controls

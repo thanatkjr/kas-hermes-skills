@@ -12,7 +12,7 @@ platforms: [windows]
 metadata:
   hermes:
     tags: [kas, internal-audit, note-taking, interview, master-context, control-analysis, rcm, merge, report]
-    related_skills: [kas-guard, rcm-knowledge, kas-ia-report-helper]
+    related_skills: [okas-guard, rcm-knowledge, kas-ia-report-helper]
 ---
 
 > ⛔ **CONFIDENTIALITY GUARD**

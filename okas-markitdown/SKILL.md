@@ -118,7 +118,7 @@ read_file("path/to/file.pdf")
 
 ## Key Advantages
 
-| markitdown-only | KAS-markitdown (smart routing) |
+| markitdown-only | okas-markitdown (smart routing) |
 |---|---|
 | PDF ไทย: 290 cid artifacts ❌ | PDF ไทย: **0 artifacts** ✅ |
 | PDF scan: แทบไม่ได้ข้อความ | PDF scan: **OCR อัตโนมัติ** ✅ |
