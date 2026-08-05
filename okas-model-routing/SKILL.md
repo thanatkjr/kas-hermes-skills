@@ -38,7 +38,7 @@ metadata:
 ```bash
 hermes config set delegation.model google/gemini-2.5-pro
 hermes config set delegation.provider openrouter
-hermes config set auxiliary.vision.model google/gemini-2.5-flash
+hermes config set auxiliary.vision.model google/gemini-3.6-flash
 hermes config set auxiliary.vision.provider openrouter
 ```
 
@@ -47,5 +47,6 @@ hermes config set auxiliary.vision.provider openrouter
 ## Prerequisites
 
 - `OPENROUTER_API_KEY` ใน `.env`
-- `model.provider: moa`
+- `model.provider: openrouter`
 - `model.default: deepseek/deepseek-v4-pro`
+- `moa.enabled: false`

@@ -11,25 +11,28 @@ Key feature: อ่าน .env file โดยตรง — ไม่พึ่ง
 import json, os, sys, urllib.request, urllib.error
 from pathlib import Path
 
-MODEL = "gemini-2.5-flash"  # ฟรี 1,500 req/day
+# Model fallback chain — ลองตามลำดับ ถ้า model แรกใช้ไม่ได้ (deprecated/quota) จะ fallback
+# Google deprecates models periodically; fallback ensures resilience
+# ⚠️ gemini-2.5-flash deprecated for NEW keys (Jul 2026) → primary ใช้ gemini-3.6-flash
+MODELS = [
+    "gemini-3.6-flash",      # primary: billing keys — unlimited, ~$0.004/req
+    "gemini-2.5-flash",      # fallback: old keys (no billing) — ฟรี 1,500 req/day
+    "gemini-flash-latest",   # fallback: always points to latest flash
+    "gemini-2.0-flash",      # last resort: stable, rarely deprecated
+]
 
 # ══════════════════════════════════════════════════════════════
 # KEY LOADING — ROBUST: read .env file directly
 # ══════════════════════════════════════════════════════════════
 
 def load_api_key() -> str:
-    """Load Google AI API key from .env file (multiple locations, multiple key names)."""
+    """Load Google AI API key from .env file (primary) or environment (fallback)."""
     KEY_NAMES = ["GOOGLE_AI_API_KEY", "GOOGLE_API_KEY", "GEMINI_API_KEY"]
     ENV_PATHS = [
         Path.home() / "AppData" / "Local" / "hermes" / ".env",
         Path.home() / ".hermes" / ".env",
     ]
-    # 1. Try environment variable first
-    for name in KEY_NAMES:
-        val = os.environ.get(name, "").strip()
-        if val:
-            return val
-    # 2. Try reading .env file directly
+    # 1. Try .env file FIRST (source of truth — managed by setup_key.py)
     for env_path in ENV_PATHS:
         if env_path.exists():
             try:
@@ -46,6 +49,11 @@ def load_api_key() -> str:
                             return value
             except Exception:
                 continue
+    # 2. Fallback: environment variable
+    for name in KEY_NAMES:
+        val = os.environ.get(name, "").strip()
+        if val:
+            return val
     return ""
 
 API_KEY = load_api_key()
@@ -75,27 +83,43 @@ def wrap_strict(query: str) -> str:
 # ══════════════════════════════════════════════════════════════
 
 def google_search(query: str) -> dict:
-    """ค้นหาด้วย Gemini + Google Search Grounding (raw query, no template)."""
+    """ค้นหาด้วย Gemini + Google Search Grounding (raw query, no template).
+    ลอง models ตามลำดับ fallback chain — ถ้า model แรกใช้ไม่ได้จะลอง model ถัดไป."""
     if not API_KEY:
         return {"error": "🔑 ไม่พบ API Key — รัน setup_key.py เพื่อติดตั้ง key ก่อน"}
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent?key={API_KEY}"
-    body = json.dumps({
-        "contents": [{"parts": [{"text": query}]}],
-        "tools": [{"google_search": {}}]
-    }).encode()
-    try:
-        req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"})
-        resp = urllib.request.urlopen(req)
-        return json.loads(resp.read())
-    except urllib.error.HTTPError as e:
-        err_body = e.read().decode(errors="ignore")
+    
+    last_error = None
+    for model in MODELS:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={API_KEY}"
+        body = json.dumps({
+            "contents": [{"parts": [{"text": query}]}],
+            "tools": [{"google_search": {}}]
+        }).encode()
         try:
-            err = json.loads(err_body)
-            return {"error": err.get("error", {}).get("message", str(e)), "code": e.code}
-        except json.JSONDecodeError:
-            return {"error": err_body[:300], "code": e.code}
-    except urllib.error.URLError as e:
-        return {"error": f"🌐 Network error: {e.reason}", "code": None}
+            req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"})
+            resp = urllib.request.urlopen(req)
+            result = json.loads(resp.read())
+            result["_model_used"] = model  # track which model succeeded
+            return result
+        except urllib.error.HTTPError as e:
+            err_body = e.read().decode(errors="ignore")
+            try:
+                err = json.loads(err_body)
+                msg = err.get("error", {}).get("message", str(e))
+            except json.JSONDecodeError:
+                msg = err_body[:300]
+            code = e.code
+            # 404 = model not found (deprecated) → try next model
+            # 429 = quota exceeded → try next model (different quota pool)
+            if code in (404, 429) and model != MODELS[-1]:
+                last_error = {"error": msg, "code": code}
+                continue
+            return {"error": msg, "code": code}
+        except urllib.error.URLError as e:
+            last_error = {"error": f"🌐 Network error: {e.reason}", "code": None}
+            continue
+    
+    return last_error or {"error": "❌ All models failed", "code": None}
 
 
 def search_strict(query: str) -> dict:
@@ -138,6 +162,8 @@ def search_and_return_json(query: str, strict: bool = True) -> dict:
 def format_result(result: dict) -> str:
     """Format results with sources for CLI display."""
     if "error" in result:
+        if result.get("code") == 404:
+            return f"❌ Error (404): {result['error']}\n\n💡 โมเดลถูกยกเลิกหรือเปลี่ยนชื่อ → ติดต่อ admin เพื่ออัปเดตสคริปต์"
         if result.get("code") == 403:
             return f"❌ Error (403): {result['error']}\n\n💡 วิธีแก้: API Key อาจหมดอายุหรือไม่มีสิทธิ์ → สร้าง key ใหม่ที่ https://aistudio.google.com/apikey"
         if result.get("code") == 429:
@@ -154,7 +180,8 @@ def format_result(result: dict) -> str:
     gm = candidates[0].get("groundingMetadata", {})
     chunks = gm.get("groundingChunks", [])
     if chunks:
-        output.append("\n=== 📎 แหล่งที่มา ===")
+        model_used = result.get("_model_used", "?")
+        output.append(f"\n=== 📎 แหล่งที่มา (model: {model_used}) ===")
         seen = set()
         idx = 1
         for ch in chunks:

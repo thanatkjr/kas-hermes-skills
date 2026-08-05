@@ -154,6 +154,52 @@ echo.
 echo         ^>^>^> ติดตั้งแล้ว !COUNT! skills ^<^<^<
 echo.
 
+:: ---------- 3.5 Auto-Fix: แก้ไข hardcoded paths + ตั้งค่า Hermes ----------
+echo [3.5/4] กำลังแก้ไข paths และตั้งค่าระบบ...
+
+:: --- 3.5a: แก้ไข C:\Users\ASUS -> %USERPROFILE% ในทุก SKILL.md ---
+set "PSFILE=%TEMP%\fixskill.ps1"
+(
+echo $dir = $env:LOCALAPPDATA + '\hermes\skills'
+echo $userPath = $env:USERPROFILE
+echo $fixed = 0
+echo $replacements = @(
+echo     @{old='C:\\Users\\ASUS'; new=$userPath}
+echo )
+echo $files = Get-ChildItem -Path $dir -Recurse -Filter 'SKILL.md' -ErrorAction SilentlyContinue
+echo foreach ($f in $files) {
+echo     $content = Get-Content $f.FullName -Raw -Encoding UTF8 -ErrorAction SilentlyContinue
+echo     if (-not $content) { continue }
+echo     $orig = $content
+echo     $name = $f.Directory.Name
+echo     foreach ($r in $replacements) {
+echo         $content = $content -replace [regex]::Escape($r.old), $r.new
+echo     }
+echo     if ($content -ne $orig) {
+echo         [System.IO.File]::WriteAllText($f.FullName, $content, [System.Text.UTF8Encoding]::new($false))
+echo         Write-Host ('         [FIXED] ' + $name)
+echo         $fixed++
+echo     }
+echo }
+echo Write-Host ('         >>> Fixed ' + $fixed + ' path references <<<')
+) > "%PSFILE%"
+powershell -ExecutionPolicy Bypass -File "%PSFILE%" 2>nul
+del "%PSFILE%" 2>nul
+
+:: --- 3.5b: ตั้งค่า Hermes — ปิด MoA + เปลี่ยน vision model ---
+echo         กำลังตั้งค่า Hermes...
+hermes config set model.provider openrouter 2>nul
+hermes config set moa.enabled false 2>nul
+hermes config set auxiliary.vision.model google/gemini-3.6-flash 2>nul
+hermes config set auxiliary.vision.provider openrouter 2>nul
+if errorlevel 1 (
+    echo         (Hermes CLI ไม่พร้อม — ข้ามการตั้งค่า)
+) else (
+    echo         >>> Provider=openrouter, MoA=OFF, Vision=gemini-3.6-flash <<<
+)
+
+echo.
+
 :: ---------- 4. เสร็จ ----------
 echo [4/4] เสร็จเรียบร้อย!
 echo.
