@@ -188,14 +188,14 @@ del "%PSFILE%" 2>nul
 
 :: --- 3.5b: ตั้งค่า Hermes — ปิด MoA + เปลี่ยน vision model ---
 echo         กำลังตั้งค่า Hermes...
-hermes config set model.provider openrouter 2>nul
+hermes config set model.provider opencode-go 2>nul
 hermes config set moa.enabled false 2>nul
 hermes config set auxiliary.vision.model google/gemini-3.6-flash 2>nul
 hermes config set auxiliary.vision.provider openrouter 2>nul
 if errorlevel 1 (
     echo         (Hermes CLI ไม่พร้อม — ข้ามการตั้งค่า)
 ) else (
-    echo         >>> Provider=openrouter, MoA=OFF, Vision=gemini-3.6-flash <<<
+    echo         >>> Provider=opencode-go, MoA=OFF, Vision=gemini-3.6-flash <<<
 )
 
 echo.

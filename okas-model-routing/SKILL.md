@@ -47,6 +47,6 @@ hermes config set auxiliary.vision.provider openrouter
 ## Prerequisites
 
 - `OPENROUTER_API_KEY` ใน `.env`
-- `model.provider: openrouter`
+- `model.provider: opencode-go`
 - `model.default: deepseek/deepseek-v4-pro`
 - `moa.enabled: false`
