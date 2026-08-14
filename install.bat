@@ -186,16 +186,21 @@ echo Write-Host ('         >>> Fixed ' + $fixed + ' path references <<<')
 powershell -ExecutionPolicy Bypass -File "%PSFILE%" 2>nul
 del "%PSFILE%" 2>nul
 
-:: --- 3.5b: ตั้งค่า Hermes — ปิด MoA + เปลี่ยน vision model ---
+:: --- 3.5b: ตั้งค่า Hermes — main=opencode-go, MoA OFF, vision/search=Gemini ---
 echo         กำลังตั้งค่า Hermes...
 hermes config set model.provider opencode-go 2>nul
+hermes config set model.default deepseek-v4-pro 2>nul
 hermes config set moa.enabled false 2>nul
-hermes config set auxiliary.vision.model google/gemini-3.6-flash 2>nul
-hermes config set auxiliary.vision.provider openrouter 2>nul
+hermes config set auxiliary.vision.provider gemini 2>nul
+hermes config set auxiliary.vision.model gemini-3.6-flash 2>nul
+hermes config set auxiliary.web_extract.provider opencode-go 2>nul
+hermes config set auxiliary.web_extract.model deepseek-v4-pro 2>nul
+hermes config set delegation.provider opencode-go 2>nul
+hermes config set delegation.model deepseek-v4-pro 2>nul
 if errorlevel 1 (
     echo         (Hermes CLI ไม่พร้อม — ข้ามการตั้งค่า)
 ) else (
-    echo         >>> Provider=opencode-go, MoA=OFF, Vision=gemini-3.6-flash <<<
+    echo         >>> Main=opencode-go/deepseek-v4-pro, MoA=OFF, Vision=gemini-3.6-flash, Delegation=opencode-go <<<
 )
 
 echo.

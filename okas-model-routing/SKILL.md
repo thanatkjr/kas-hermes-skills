@@ -1,7 +1,7 @@
 ---
 name: okas-model-routing
-description: "ตั้งค่า model routing: DeepSeek V4 Pro เป็นหลัก, Gemini Flash สำหรับ PDF/vision/delegation — ประหยัดค่าใช้จ่าย 97% สำหรับงานอ่านเอกสาร"
-version: 1.0.0
+description: "ตั้งค่า model routing: DeepSeek V4 Pro (opencode-go) เป็นหลัก, Gemini (native) สำหรับ vision/search — MoA ปิดเสมอ, ไม่พึ่ง openrouter"
+version: 5.0.0
 author: Thanat
 license: MIT
 platforms: [linux, macos, windows]
@@ -21,32 +21,73 @@ metadata:
 > 
 > ---
 
-# OKAS Model Routing Setup (v3)
+# OKAS Model Routing Setup (v5)
 
-ตั้งค่าให้ Hermes เลือก model อัตโนมัติตามประเภทงาน:
+ตั้งค่าให้ Hermes เลือก model อัตโนมัติตามประเภทงาน — **ไม่ต้องใช้ openrouter** (ใช้ opencode-go + Google key เท่านั้น):
 
-| # | งาน | Model | ราคา/1M tok | เพราะ |
-|---|---|---|---|---|
-| 1 | ถามตอบทั่วไป | DeepSeek V4 Pro | $2/$8 | Q&A สั้น ต่างกันแค่เซ็นต์ |
-| 2 | Slide/Infographic/Dashboard | **Gemini 2.5 Pro** | $1.25/$10 | ดีไซน์สวย ถูกกว่า Claude |
-| 3 | อ่าน PDF/รูป → ทำต่อ | PDF:pymupdf → **DeepSeek V4 Pro** / Vision:Gemini Flash | $0 → $2/$8 | สกัดฟรี+วิเคราะห์ Pro |
-| 4 | RCM / Audit Report | **DeepSeek V4 Pro** | $2/$8 | วิเคราะห์ภาษาไทยดี |
-| 5 | Coding | **DeepSeek V4 Pro** | $2/$8 | โค้ดเก่ง ถูกกว่า Claude |
+| # | งาน | Model | Provider |
+|---|---|---|---|
+| 1 | ถามตอบทั่วไป | `deepseek-v4-pro` | opencode-go |
+| 2 | Slide/Infographic/Dashboard (delegation) | `deepseek-v4-pro` | opencode-go |
+| 3 | อ่าน PDF/รูป → ทำต่อ | PDF:pymupdf → `deepseek-v4-pro` / Vision: `gemini-3.6-flash` | opencode-go / gemini |
+| 4 | RCM / Audit Report | `deepseek-v4-pro` | opencode-go |
+| 5 | Coding | `deepseek-v4-pro` | opencode-go |
+| 6 | ค้นหาข้อมูล (web search) | `gemini-3.6-flash` | google_search.py (Google AI) |
 
 ## Setup
 
 ```bash
-hermes config set delegation.model google/gemini-2.5-pro
-hermes config set delegation.provider openrouter
-hermes config set auxiliary.vision.model google/gemini-3.6-flash
-hermes config set auxiliary.vision.provider openrouter
+hermes config set model.provider opencode-go
+hermes config set model.default deepseek-v4-pro
+hermes config set moa.enabled false
+hermes config set delegation.provider opencode-go
+hermes config set delegation.model deepseek-v4-pro
+hermes config set auxiliary.vision.provider gemini
+hermes config set auxiliary.vision.model gemini-3.6-flash
+hermes config set auxiliary.web_extract.provider opencode-go
+hermes config set auxiliary.web_extract.model deepseek-v4-pro
 ```
 
 จากนั้น `/reset`
 
+## ⛔ MoA — ห้ามเปิดเด็ดขาด
+
+MoA (Mixture of Agents) ถามหลายโมเดลพร้อมกัน → aggregator สังเคราะห์ → **ตอบช้า + แพง 3-5 เท่า**
+
+```bash
+hermes config set moa.enabled false
+```
+
+- บางคนเผลอเปิด MoA → AI ตอบช้ามาก → ต้องปิดเสมอ ไม่มีข้อยกเว้น
+- ตรวจสอบ: `hermes config get moa.enabled` → ต้องได้ `false`
+
+## 🔄 User เปลี่ยน model ได้
+
+default คือ `deepseek-v4-pro` (opencode-go) — user เปลี่ยนเองได้เสมอ:
+
+- ภายใน session: `/model <ชื่อ>`
+- ถาวร: `hermes model` (interactive picker) หรือ `hermes config set model.default <ชื่อ>`
+
+**ข้อจำกัดบน opencode-go:** เปลี่ยนได้เฉพาะ model ที่ opencode-go ให้บริการ (DeepSeek / GLM / Qwen / Kimi / MiniMax / MiMo)
+
+- ต้องการ Gemini / Claude / GPT เป็น main model → ต้องสลับ provider:
+  ```bash
+  hermes config set model.provider openrouter
+  hermes config set model.default deepseek/deepseek-v4-pro   # ชื่อเต็มมี prefix provider/
+  ```
+
 ## Prerequisites
 
-- `OPENROUTER_API_KEY` ใน `.env`
+- `OPENCODE_GO_API_KEY` ใน `.env` (subscription OpenCode Go)
+- `GOOGLE_API_KEY` ใน `.env` (search + vision) — ⚠️ ต้องชื่อ `GOOGLE_API_KEY` ไม่ใช่ `GOOGLE_AI_API_KEY` (native `gemini` provider อ่าน `GOOGLE_API_KEY`/`GEMINI_API_KEY` เท่านั้น)
 - `model.provider: opencode-go`
-- `model.default: deepseek/deepseek-v4-pro`
+- `model.default: deepseek-v4-pro`
 - `moa.enabled: false`
+
+> 📌 openrouter เป็นตัวเลือกเสริม (optional) — config หลักไม่จำเป็นต้องมี
+
+## ⚠️ สำหรับทีม (install.bat)
+
+`install.bat` ตั้งค่าทุกอย่างให้อัตโนมัติ — config เดียวกันทั้งเครื่องพี่และทีม เพราะไม่พึ่ง openrouter
+
+ดูรายละเอียด deployment ที่ `okas-model-guard` → `references/install-bat-deployment.md`

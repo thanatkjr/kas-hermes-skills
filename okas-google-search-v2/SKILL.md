@@ -116,7 +116,7 @@ python google_search.py "คำค้นหาที่นี่"
 Agent ใช้ script `setup_key.py` — ซึ่งจะ:
 
 1. ✅ ตรวจสอบ format key (ต้องขึ้นต้นด้วย `AIza` หรือ `AQ.`)
-2. ✅ เขียนลง `.env` file โดยตรง (key: `GOOGLE_AI_API_KEY`)
+2. ✅ เขียนลง `.env` file โดยตรง (key: `GOOGLE_API_KEY` — มาตรฐานใหม่ ใช้ได้ทั้ง search + vision)
 3. ✅ ทดสอบ key โดยค้นหาจริง ("test search")
 4. ✅ ยืนยันผล success/failure
 5. ❌ ถ้า key ใช้ไม่ได้ → แจ้ง error + วิธีแก้
@@ -146,9 +146,10 @@ Agent ใช้ script `setup_key.py` — ซึ่งจะ:
 
 | Key Type | Free Tier | Models | Cost |
 |----------|:---------:|--------|------|
-| **Old key (ไม่มี billing)** | ✅ 1,500 req/day | `gemini-2.5-flash` | $0 |
-| **New key (เปิด billing แล้ว)** | ❌ billable | `gemini-3.6-flash` | ~$0.004/req |
+| **Old key (ไม่มี billing)** | ✅ 1,500 req/day | `gemini-2.5-flash` (fallback) | $0 |
+| **New key (เปิด billing แล้ว)** | ❌ billable | `gemini-3.6-flash` (primary) | ~$0.004/req |
 
+> 📌 **ทีม KAS ใช้ billing key เป็น primary** — `install.bat` ตั้งค่า `gemini-3.6-flash` เป็น default
 > ⚠️ **ถ้า key ปัจจุบันยังใช้ได้ (ไม่มี billing) — อย่าเปิด billing!** ใช้ต่อไปฟรี
 > ดูรายละเอียดเพิ่มเติม: `references/model-maintenance.md`
 
@@ -189,14 +190,17 @@ Agent ใช้ script `setup_key.py` — ซึ่งจะ:
 |------|--------|
 | `references/model-maintenance.md` | วิธีตรวจสอบ model availability + lifecycle |
 
-## Free Tier
+## Free Tier & Model Priority
 
-| Model | Key Type | ต่อวัน | Cost |
-|-------|----------|:------:|------|
-| `gemini-2.5-flash` | Old key (no billing) | 1,500 req | $0 |
-| `gemini-3.6-flash` | New key (billing) | unlimited* | ~$0.004/req |
-| `gemini-2.0-flash` | Old key (no billing) | 1,500 req | $0 |
+| Priority | Model | Key Type | ต่อวัน | Cost |
+|:---:|-------|----------|:------:|------|
+| **1** | `gemini-3.6-flash` | Billing key | unlimited* | ~$0.004/req |
+| 2 | `gemini-2.5-flash` | Old key (no billing) | 1,500 req | $0 |
+| 3 | `gemini-flash-latest` | — | — | — |
+| 4 | `gemini-2.0-flash` | Old key (no billing) | 1,500 req | $0 |
 
+> 🔄 **Fallback chain (v2.2+):** `3.6-flash` → `2.5-flash` → `flash-latest` → `2.0-flash`
+>
 > ⚠️ **เปิด billing → free tier หายตลอดกาล** — อย่าเปิดถ้า key เดิมยังใช้ได้!
-> 
-> สคริปต์ v2.1+ มี fallback อัตโนมัติ — ถ้า model แรกใช้ไม่ได้จะลอง model ถัดไป
+>
+> 📌 **Team default:** `install.bat` ตั้งค่า primary เป็น `gemini-3.6-flash` (สำหรับทีมที่ใช้ billing key) — คนใช้ key เก่าจะ fallback ไป `2.5-flash` อัตโนมัติ

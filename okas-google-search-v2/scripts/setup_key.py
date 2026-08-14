@@ -23,7 +23,12 @@ Exit codes:
 import json, os, sys, urllib.request, urllib.error
 from pathlib import Path
 
-MODEL = "gemini-2.5-flash"
+MODELS = [
+    "gemini-3.6-flash",
+    "gemini-2.5-flash",
+    "gemini-flash-latest",
+    "gemini-2.0-flash",
+]
 
 
 def validate_key(key: str) -> tuple:
@@ -63,7 +68,7 @@ def write_key_to_env(key: str) -> tuple:
                 if k in KEY_NAMES:
                     continue
             new_lines.append(line)
-        new_lines.append(f"GOOGLE_AI_API_KEY={key}")
+        new_lines.append(f"GOOGLE_API_KEY={key}")
         content = "\n".join(new_lines).strip() + "\n"
         env_path.write_text(content, encoding="utf-8")
         return True, str(env_path)
@@ -72,41 +77,54 @@ def write_key_to_env(key: str) -> tuple:
 
 
 def test_key(key: str) -> tuple:
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL}:generateContent?key={key}"
-    body = json.dumps({
-        "contents": [{"parts": [{"text": "test search: hello world"}]}],
-        "tools": [{"google_search": {}}]
-    }).encode()
-    try:
-        req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"})
-        resp = urllib.request.urlopen(req, timeout=30)
-        data = json.loads(resp.read())
-        candidates = data.get("candidates", [])
-        if candidates:
-            text = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "")
-            preview = text[:100].replace("\n", " ")
-            return True, f"✅ ทดสอบสำเร็จ: {preview}..."
-        else:
-            block_reason = data.get("promptFeedback", {}).get("blockReason", "unknown")
-            return False, f"❌ API ตอบกลับแต่ไม่มีเนื้อหา — blockReason: {block_reason}"
-    except urllib.error.HTTPError as e:
-        err_body = e.read().decode(errors="ignore")
+    """Test key by trying models in fallback order."""
+    last_error = None
+    for model in MODELS:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={key}"
+        body = json.dumps({
+            "contents": [{"parts": [{"text": "test search: hello world"}]}],
+            "tools": [{"google_search": {}}]
+        }).encode()
         try:
-            err = json.loads(err_body)
-            msg = err.get("error", {}).get("message", str(e))
-        except json.JSONDecodeError:
-            msg = err_body[:200]
-        code = e.code
-        if code == 403:
-            return False, f"❌ HTTP 403 (Permission Denied): {msg}\n\n💡 Key นี้ไม่มีสิทธิ์ใช้งาน หรือหมดอายุ → สร้าง key ใหม่ที่ https://aistudio.google.com/apikey"
-        elif code == 429:
-            return False, f"❌ HTTP 429 (Quota Exceeded): {msg}\n\n💡 ใช้เกิน Free Tier (1,500/day) → รอวันถัดไป หรือสร้าง key ใหม่ใน project อื่น"
-        else:
-            return False, f"❌ HTTP {code}: {msg}"
-    except urllib.error.URLError as e:
-        return False, f"❌ Network error: {e.reason}"
-    except Exception as e:
-        return False, f"❌ Unexpected error: {e}"
+            req = urllib.request.Request(url, data=body, headers={"Content-Type": "application/json"})
+            resp = urllib.request.urlopen(req, timeout=30)
+            data = json.loads(resp.read())
+            candidates = data.get("candidates", [])
+            if candidates:
+                text = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "")
+                preview = text[:100].replace("\n", " ")
+                return True, f"✅ ทดสอบสำเร็จ (model: {model}) — {preview}..."
+            else:
+                block_reason = data.get("promptFeedback", {}).get("blockReason", "unknown")
+                last_error = (False, f"❌ API ตอบกลับแต่ไม่มีเนื้อหา — blockReason: {block_reason}")
+                continue
+        except urllib.error.HTTPError as e:
+            err_body = e.read().decode(errors="ignore")
+            try:
+                err = json.loads(err_body)
+                msg = err.get("error", {}).get("message", str(e))
+            except json.JSONDecodeError:
+                msg = err_body[:200]
+            code = e.code
+            if code in (404, 429) and model != MODELS[-1]:
+                last_error = (False, f"⚠️ {model}: {msg} → trying next model...")
+                continue
+            if code == 403:
+                return False, f"❌ HTTP 403 (Permission Denied): {msg}\n\n💡 Key นี้ไม่มีสิทธิ์ใช้งาน หรือหมดอายุ → สร้าง key ใหม่ที่ https://aistudio.google.com/apikey"
+            elif code == 429:
+                return False, f"❌ HTTP 429 (Quota Exceeded): {msg}\n\n💡 ใช้เกิน Free Tier (1,500/day) → รอวันถัดไป หรือสร้าง key ใหม่ใน project อื่น"
+            else:
+                return False, f"❌ HTTP {code}: {msg}"
+        except urllib.error.URLError as e:
+            last_error = (False, f"❌ Network error: {e.reason}")
+            continue
+        except Exception as e:
+            last_error = (False, f"❌ Unexpected error: {e}")
+            continue
+    
+    if last_error:
+        return last_error
+    return False, "❌ All models failed to respond"
 
 
 def main():

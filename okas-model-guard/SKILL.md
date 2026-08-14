@@ -1,7 +1,7 @@
 ---
 name: okas-model-guard
 description: "Guard against accidental MoA / misconfiguration — verify model setup, disable MoA, check costs"
-version: 1.0.0
+version: 2.0.0
 author: Thanat
 license: MIT
 platforms: [linux, macos, windows]
@@ -27,40 +27,52 @@ metadata:
 
 ## ⚠️ Pitfall หลัก: MoA (Mixture of Agents)
 
-MoA ทำงานโดยถามหลายโมเดลพร้อมกัน → aggregator สังเคราะห์ → **ค่าใช้จ่าย 3-5 เท่า**
+MoA ทำงานโดยถามหลายโมเดลพร้อมกัน → aggregator สังเคราะห์ → **ค่าใช้จ่าย 3-5 เท่า + ตอบช้า**
 ต้องปิดไว้เสมอเว้นแต่จงใจใช้
 
 ### วิธีปิด MoA
 
 ```bash
-hermes config set model.provider openrouter
 hermes config set moa.enabled false
+```
+
 ## Verification
 
 เช็ค configuration ปัจจุบัน:
 
 ```bash
-python references/verify_config.py
+hermes config get model.provider
+hermes config get model.default
+hermes config get moa.enabled
+hermes config get auxiliary.vision.provider
+hermes config get auxiliary.vision.model
+hermes config get delegation.provider
+hermes config get delegation.model
 ```
-
-หรือดู script เต็มที่ `references/verify_config.py`
 
 **ผลลัพธ์ที่ถูกต้อง:**
 ```
-Provider: openrouter        ← ต้องเป็น openrouter ไม่ใช่ moa
-Model:    deepseek/deepseek-v4-pro
-MoA:      ✅ OFF
-Vision:   google/gemini-2.5-flash
+Provider:    opencode-go    ← ต้องเป็น opencode-go ไม่ใช่ moa
+Model:       deepseek-v4-pro
+MoA:         ✅ OFF
+Vision:      gemini / gemini-3.6-flash
+Delegation:  opencode-go / deepseek-v4-pro
 ```
 
 ## การตั้งค่าที่ถูกต้อง
 
 | Key | ค่าที่ถูกต้อง | ❌ ห้าม |
 |-----|-------------|--------|
-| `model.provider` | `openrouter` | `moa` |
-| `model.default` | `deepseek/deepseek-v4-pro` | โมเดลฟรี |
+| `model.provider` | `opencode-go` | `moa` |
+| `model.default` | `deepseek-v4-pro` | โมเดลฟรี |
 | `moa.enabled` | `false` | `true` |
-| `auxiliary.vision.model` | `google/gemini-2.5-flash` | — |
+| `auxiliary.vision.provider` | `gemini` | `openrouter` |
+| `auxiliary.vision.model` | `gemini-3.6-flash` | `google/gemini-3.6-flash` |
+| `delegation.provider` | `opencode-go` | `openrouter` |
+| `delegation.model` | `deepseek-v4-pro` | `google/gemini-2.5-pro` |
+
+> 📌 **Deployment:** `install.bat` ตั้งค่าทุกอย่างให้อัตโนมัติ (ดู `references/install-bat-deployment.md`)
+> ⚠️ **Key มาตรฐาน:** ใช้ `GOOGLE_API_KEY` (search + vision) — native `gemini` provider ไม่รู้จัก `GOOGLE_AI_API_KEY`
 
 ## Aggregator คืออะไร
 
