@@ -1,6 +1,9 @@
 ---
 name: kas-htmlformat
 description: สร้าง HTML ในรูปแบบที่พร้อมแปลงเป็น PowerPoint — โครงสร้าง slide container, split layout, ตาราง, diagram, print landscape
+version: 1.0.0
+author: Thanat Kerdcharoen
+license: MIT
 ---
 
 # KAS HTMLFORMAT

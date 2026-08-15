@@ -1,5 +1,6 @@
 ---
 name: xkas-master-context
+version: 1.0.0
 description: |
   สร้าง Master Context สำหรับกระบวนการทางธุรกิจ (Internal Audit) —
   ครอบคลุม: ขั้นตอนปฏิบัติงาน (ละเอียด), กฎ/การตัดสินใจ,

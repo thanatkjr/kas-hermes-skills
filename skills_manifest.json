@@ -1,0 +1,17 @@
+{
+  "approved_kas": ["kas-rcm-setup", "kas-master-note", "kas-htmlformat", "kas-ia-report-helper"],
+  "deprecated": [
+    "xkas-note",
+    "xkas-client-knowledge-base",
+    "xkas-master-context",
+    "kas-note",
+    "kas-client-knowledge-base",
+    "kas-master-context",
+    "kas-guard",
+    "kas-markitdown",
+    "kas-model-guard",
+    "kas-model-routing",
+    "kas-google-search-v2",
+    "kas-db-prevention"
+  ]
+}

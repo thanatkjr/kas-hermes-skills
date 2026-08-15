@@ -1,0 +1,148 @@
+# RCM Database — Full Schema Reference
+
+โครงสร้างข้อมูลที่สมบูรณ์ของ RCM Database (MCP Cloudflare) — ใช้เป็น reference เวลาดึงข้อมูลจาก `get_process_rcm`, `get_activity`, หรือ `get_risk_detail`
+
+> Source: MCP Cloudflare `rcm-mcp-server.thanatkjr.workers.dev`
+> DB Version: 2 | Updated: 2026-07-28
+> Totals: 10 processes, 848 activities, 3,502 risks, 7,435 controls, 14,894 tests
+
+---
+
+## Data Hierarchy
+
+```
+DATABASE (1 JSON file)
+└── PROCESS (10: R, P, IC, OP, ELC, AF, FA, HR, IT, SHE)
+    └── ACTIVITY (848 total)
+        ├── activity_code       : string  (e.g., "R-ELEC-001")
+        ├── process_code        : string  (e.g., "R")
+        ├── activity_name       : string  (Thai)
+        ├── sector_code         : string  (UNVS, ELEC, MACH, FOOD, etc.)
+        ├── risk_scan[12]       : array   ← 12-category presence grid
+        └── risks[]             : array
+            ├── risk_code       : string  (e.g., "R-ELEC-001.R1")
+            ├── activity_code   : string
+            ├── risk_name       : string  (Thai)
+            ├── risk_category   : string  (12 categories)
+            ├── poison          : string  (โลภะ | โทสะ | โมหะ)
+            ├── indicator_code  : string
+            ├── indicator_name  : string  (KRI description)
+            ├── validation_code : string
+            ├── validations[]   : array of {code, text}
+            ├── policy_code     : string
+            ├── policies[]      : array of {code, text}
+            ├── procedure_code  : string
+            ├── procedures[]    : array of {code, text}
+            ├── report_code     : string
+            ├── report_name     : string
+            └── controls[]      : array
+                ├── control_code       : string
+                ├── risk_code          : string
+                ├── control_name       : string  (Thai)
+                ├── control_category   : string  (Authorisation, Segregation of Duties, etc.)
+                ├── control_method     : string  (Manual Control, System Control, etc.)
+                ├── control_nature     : string  (Preventive, Detective, Corrective)
+                ├── question_code      : string
+                ├── question_text      : string  (Thai — interview question)
+                └── tests[]            : array of {test_code, test_name}
+```
+
+---
+
+## 🔴 CRITICAL: Tests & Questions are at CONTROL level, NOT risk level
+
+```python
+# ❌ WRONG — will always return empty
+for risk in activity["risks"]:
+    tests = risk.get("tests", [])        # → []
+    questions = risk.get("questions", []) # → []
+
+# ✅ CORRECT — iterate controls inside each risk
+for risk in activity["risks"]:
+    for control in risk["controls"]:
+        tests = control["tests"]          # → [{test_code, test_name}, ...] (2 per control)
+        question = control["question_text"] # → string (1 per control)
+```
+
+---
+
+## 12 Risk Categories (risk_scan grid)
+
+Every activity has a `risk_scan` array scanning for presence of 12 risk types:
+
+| # | Category | Status Values | Thai Note |
+|---|----------|---------------|-----------|
+| 1 | Operational Risk | มี / N/A | |
+| 2 | Reporting Risk | มี / N/A | |
+| 3 | Compliance Risk | มี / N/A | |
+| 4 | Fraud Risk | มี / N/A | |
+| 5 | Technology Risk | มี / N/A | |
+| 6 | Customer Risk | มี / N/A | |
+| 7 | Reputational Risk | มี / N/A | |
+| 8 | Human Resource Risk | มี / N/A | |
+| 9 | Supply Chain Risk | มี / N/A | |
+| 10 | Strategic Risk | มี / N/A | |
+| 11 | Financial Risk | มี / N/A | |
+| 12 | Emerging Risk | มี / N/A | |
+
+N/A entries have `risk_code: null` and a note like "ไม่ใช่ความเสี่ยงต้นทางที่ material ของกิจกรรมนี้"
+
+---
+
+## Poison Values
+
+3 ค่าเท่านั้น — **ไม่มี Active/Passive/polarity** (ตาม OKAS QC Guard R5):
+
+| Value | Meaning | สีใน UI |
+|-------|---------|---------|
+| โลภะ | ความอยากได้ (Greed) | 🟡 ส้มอ่อน |
+| โทสะ | ความโกรธ/ไม่พอใจ (Aversion) | 🔴 แดง |
+| โมหะ | ความหลง/ไม่รู้ (Delusion) | ⚫ ม่วง |
+
+---
+
+## Sector Codes (used with `get_process_rcm`)
+
+| Code | Industry |
+|------|----------|
+| UNVS | Universal (ทุกธุรกิจ) |
+| ELEC | Electronics / Semiconductor |
+| MACH | Manufacturing / Machinery |
+| FOOD | Food & Beverage |
+| CONS | Construction |
+| COMM | Commerce / Retail |
+| TOUR | Tourism / Hotel |
+| AGRI | Agriculture |
+| ICT | IT / Software |
+| PERS | Personnel Services |
+| MEDA | Media / Entertainment |
+| ENGY | Energy |
+| LOGY | Logistics |
+| PROP | Property / Real Estate |
+
+---
+
+## MCP Tools Coverage
+
+| Tool | Returns | Notes |
+|------|---------|-------|
+| `get_process_rcm` | Activity → Risk → Control → Test + Question | **Best for bulk RCM** — one call per process+sector. Includes all risk-level fields (poison, indicator, policies, procedures, validations, report) |
+| `get_activity` | Single activity with full tree | Use when you need one specific activity |
+| `get_risk_detail` | Single risk with all sub-fields | Use for deep-dive on specific risk |
+| `get_process_overview` | Activity list (codes + names) | Lightweight — use for browsing |
+| `search_risks` | Risk search results | Keyword search across all risks |
+
+---
+
+## Coverage Guarantees (verified 2026-08-09, 1,294 risks)
+
+| Field | Coverage | Notes |
+|-------|:--------:|-------|
+| `poison` | 100% | Every risk has one of 3 values |
+| `indicator_name` | 100% | KRI present for all risks |
+| `validations` | 100% | 2 items per risk |
+| `policies` | 100% | 2 items per risk |
+| `procedures` | 100% | 2 items per risk |
+| `report_name` | 100% | Report name present for all risks |
+| `controls[].tests` | 100% | 2 tests per control |
+| `controls[].question_text` | 100% | 1 question per control |

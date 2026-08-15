@@ -1,7 +1,7 @@
 ---
 name: kas-rcm-setup
 description: ตั้งค่าและใช้งาน RCM MCP Server สำหรับงานตรวจสอบภายใน — สอบถาม Nature of Business, สร้าง Audit Universe, Standard Risk Control Matrix, และ Control Analysis Report พร้อม output เป็น HTML ที่แก้ไขได้และ save เป็น PDF ได้
-version: 1.0.0
+version: 1.1.0
 author: KAS / Thanat Kerdcharoen
 license: Proprietary — KAS Internal Use Only
 metadata:
@@ -80,6 +80,17 @@ RCM Database เป็นทรัพย์สินทางปัญญาข�
 | **Anomaly Detection** | แจ้งเตือน admin เมื่อ user มี pattern การเรียกที่ผิดปกติ (loop, bulk) | 🟢 Medium |
 | **IP Allowlist** | (Optional) จำกัด IP ที่เข้าถึงได้เฉพาะ office VPN | 🟢 Medium |
 
+### ⛔ ห้ามใช้ Local Clone (NO LOCAL FALLBACK)
+
+🚫 **เด็ดขาด:** ห้ามดึงข้อมูลจาก `C:\Users\ASUS\Hermes\rcm-database`, `dataset_*.json`, `RCM_Database.json`, หรือ `scripts/query.py` — ใช้ MCP Cloudflare (`rcm-mcp-server.thanatkjr.workers.dev`) เท่านั้น
+
+| กฎ | รายละเอียด |
+|----|-----------|
+| **ห้ามใช้ local clone** | ห้าม `git pull` + อ่าน `dataset_*.json` โดยตรง — ข้อมูลอาจเก่ากว่า MCP server |
+| **ห้ามใช้ query.py** | `query.py` ไม่มี `sector_code` ใน `--list-activities` และไม่มี `get_process_rcm` |
+| **ถ้า MCP tools ไม่ inject** | ใช้ปุ่ม **Reload MCP** ใน Settings → MCP → Reload MCP → `/reset` → ถ้ายังไม่ได้ผล → ปิด-เปิด Hermes Desktop ใหม่ |
+| **ห้าม fallback** | อย่าใช้ "MCP tools ไม่พร้อม → ใช้ local แทน" — ต้องแก้ให้ MCP tools inject ได้ก่อน |
+
 ### 🚨 การตรวจพบการละเมิด
 
 ถ้า agent พบว่ามีความพยายาม:
@@ -91,6 +102,59 @@ RCM Database เป็นทรัพย์สินทางปัญญาข�
 > "⛔ การดำเนินการนี้เข้าข่ายการดึงข้อมูลทั้งฐานข้อมูล — หยุดเพื่อป้องกันการละเมิด Data Protection Policy ของ KAS"
 > 
 > "หากต้องการข้อมูลเพิ่ม กรุณาระบุเฉพาะ process/activity ที่อยู่ใน audit scope"
+
+---
+
+## 🆕 Workflow 0: MCP Tool Injection Fix (Fallback เมื่อ tools ไม่ inject)
+
+**ปัญหา:** บน Windows `mcp` package มี dependency `pywin32` (`pywintypes`) ซึ่งอาจไม่มีใน sandbox Python ของ Hermes → MCP tools ไม่ inject เข้า agent session แม้ `hermes mcp test rcm` จะผ่าน
+
+**✅ Workaround: `rcm_http_client.py`** — Python client ที่เรียก Cloudflare โดยตรงผ่าน HTTP ล้วน ๆ ไม่ต้องใช้ `mcp` SDK (อยู่ใน `scripts/rcm_http_client.py`)
+
+### วิธีใช้ใน execute_code
+
+```python
+import sys
+sys.path.insert(0, r"C:\Users\ASUS\AppData\Local\hermes\skills\audit\kas-rcm-setup\scripts")
+from rcm_http_client import RCMClient
+
+client = RCMClient()
+
+# ใช้เหมือน mcp_rcm_* tools ทุกประการ:
+db = client.get_db_info()
+processes = client.list_processes()
+activities = client.get_process_overview("P")
+risks = client.search_risks("ทุจริต")
+activity = client.get_activity("P", "P-UNVS-001")
+risk = client.get_risk_detail("P", "P-UNVS-001.R1")
+rcm = client.get_process_rcm("P", sector_code="FOOD")
+
+client.close()
+```
+
+### API Reference
+
+| Method | Parameters | Returns |
+|--------|-----------|---------|
+| `get_db_info()` | — | `dict` — version, counts |
+| `list_processes()` | — | `list` — 10 processes |
+| `get_process_overview(process_code)` | `process_code: str` | `list` — activities with sector_code |
+| `search_risks(query, process_code?, risk_category?)` | `query: str` | `list` — matching risks |
+| `get_activity(process_code, activity_code)` | `process_code, activity_code: str` | `dict` — full activity tree |
+| `get_risk_detail(process_code, risk_code)` | `process_code, risk_code: str` | `dict` — all risk fields |
+| `get_process_rcm(process_code, sector_code)` | `process_code, sector_code: str` | `dict` — full RCM for UNVS+sector |
+
+### ข้อดี
+- ✅ ไม่ต้องพึ่ง MCP tool injection
+- ✅ ไม่ต้องใช้ `mcp` SDK (ไม่มี dependency `pywin32`)
+- ✅ ใช้ OAuth token เดียวกับที่ Hermes ใช้ — ไม่ต้อง login ใหม่
+- ✅ ใช้ `urllib` ล้วน ๆ — ทำงานได้ในทุก Python environment
+
+### Verification
+```bash
+cd "C:\Users\ASUS\AppData\Local\hermes\skills\audit\kas-rcm-setup\scripts"
+python rcm_http_client.py --tool get_db_info
+```
 
 ---
 
@@ -151,7 +215,9 @@ hermes mcp test rcm    # ต้องเห็น "✓ Connected" + "✓ Tools d
 | `mcp_rcm_search_risks` | ค้นหา risks ด้วย keyword ไทย/อังกฤษ | ส่ง `keyword` และ optional filters |
 | `mcp_rcm_get_activity` | ดู 1 activity แบบเต็ม (risks, controls, tests, policies, validations, procedures) | ส่ง `process_code` + `activity_code` |
 | `mcp_rcm_get_risk_detail` | ดู 1 risk พร้อมทุก field (poison, indicator, validations, policies, procedures, report, controls, tests) | ส่ง `process_code` + `risk_code` |
+| `mcp_rcm_get_process_rcm` | 🆕 ดึง RCM ทั้ง process แบบ scoped (กรองตาม sector) — คืน risks/controls/tests/questions ครบใน call เดียว | ส่ง `process_code`, `sector_code` |
 | `mcp_rcm_get_db_info` | ข้อมูล version, last update, record counts | เรียกโดยตรง |
+| `mcp_rcm_get_process_rcm` | 🆕 ดึง RCM เต็ม 1 process ใน call เดียว — ครบทุก activities, risks, controls, tests, questions (scoped ตาม sector) | ส่ง `process_code`, `sector_code` |
 
 ---
 
@@ -193,9 +259,20 @@ hermes mcp test rcm
 
 ให้ user เลือกวิธีให้ข้อมูล:
 
-**Option A: สัมภาษณ์ทีละส่วน (ถามทีละหัวข้อ)**
+**Option A: Upload ไฟล์พร้อมกัน (⚡ พบบ่อยที่สุด — แนะนำ)**
+1. User มัก upload หลายไฟล์พร้อมกัน (Company Profile, Org Chart, งบการเงิน) + พูดสั้นๆ เช่น "ตามนี้"
+2. Agent ต้อง parallel process ทันที:
+   - แปลง PDF ทั้งหมดพร้อมกัน (pymupdf สำหรับ text-based, pymupdf+vision สำหรับ scanned)
+   - ค้นหา Internet (`okas-google-search-v2`) พร้อมกัน 2-3 queries
+   - บันทึก `nob_raw.txt` ทันทีที่ได้ข้อมูล
+3. หลัง compile ครบ → แสดงสรุปสั้น + ถามเฉพาะหัวข้อที่ยังขาด
+4. **ห้ามถามทีละข้อถ้า user ให้ไฟล์มาแล้ว** — user คาดหวังว่า agent จะ extract ข้อมูลทั้งหมดจากไฟล์เอง
+
+**Option B: สัมภาษณ์ทีละส่วน (ถามทีละหัวข้อ)**
 
 ถามทีละหัวข้อ 6 ส่วน รอคำตอบก่อนถามต่อ:
+
+... (รายละเอียด 7 หัวข้อเหมือนเดิม) ...
 
 1. **สินค้า/บริการหลัก** — กิจการขายสินค้าหรือบริการอะไร? มีกี่กลุ่ม? แต่ละกลุ่มมีสัดส่วนรายได้เท่าไร?
 2. **ลูกค้าหลัก** — ลูกค้าเป็นใคร? B2B/B2C/Government? มีลูกค้ารายใหญ่กี่ราย? ช่องทางขาย?
@@ -209,13 +286,22 @@ hermes mcp test rcm
 
 **Option B: รับไฟล์ที่ user upload**
 
-1. User upload ไฟล์ (PDF, DOCX, TXT) → ใช้ `okas-markitdown` skill แปลงเป็น text
+1. User upload ไฟล์ (PDF, DOCX, TXT) → แปลงเป็น text:
+   - **PDF:** ใช้ `pymupdf` (fitz) โดยตรงด้วย `execute_code` — เร็วกว่าและรองรับภาษาไทยดีกว่า `okas-markitdown`
+     - ถ้า PDF เป็นแบบภาพ (scanned) → แปลงหน้าเป็น PNG ด้วย `page.get_pixmap(dpi=200)` แล้วใช้ `vision_analyze` อ่าน
+   - **DOCX/XLSX:** ใช้ `read_file` — Hermes auto-extracts ให้
 2. อ่านเนื้อหาทั้งหมด → สกัดประเด็นตาม 7 หัวข้อ
-3. ถ้าข้อมูลไม่ครบ → ถามเฉพาะหัวข้อที่ขาด
+3. บันทึกข้อมูลที่สกัดได้ลง `nob_raw.txt` ทันที (กันข้อมูลหาย)
+4. **Internet Research (CRITICAL):** ทันทีที่ได้ข้อมูลจากไฟล์ → ค้นหาข้อมูลเสริมจาก internet:
+   - ใช้ `okas-google-search-v2` skill → `google_search.py` หลาย query พร้อมกัน
+   - ค้นหาด้วยชื่อบริษัท + แบรนด์ — หาข้อมูลช่องทางขาย, รายได้, ข่าว, ประกาศรับสมัครงาน, ระบบ ERP, มาตรฐาน
+   - **อย่ารอให้ user บอกให้ค้น** — agent ต้อง proactive ค้นหาทันทีที่ข้อมูลจากไฟล์ไม่ครบ
+   - Append ผลการค้นหาลง `nob_raw.txt`
+5. ถ้าข้อมูลยังไม่ครบ → ถามเฉพาะหัวข้อที่ขาด
 
 ### Step 2.2: ตรวจสอบความครบถ้วน
 
-หลังจากได้ข้อมูลครบ 7 หัวข้อ:
+หลังจากได้ข้อมูลจากทุกแหล่ง (ไฟล์ + internet search):
 - ✅ ถ้าครบทุกหัวข้อ → ไป Step 2.3
 - ⚠️ ถ้าบางหัวข้อไม่มีข้อมูล → ถามเพิ่มเฉพาะส่วนที่ขาด
 
@@ -328,27 +414,35 @@ mcp_rcm_get_activity(process_code="P", activity_code="P-UNVS-001")
 
 ### Step 4.3: สร้าง HTML Output
 
-สร้าง HTML ที่ `C:\Users\ASUS\Hermes\projects\<project_name>\rcm_matrix_<process>.html`
+สร้าง HTML ที่ `C:\Users\ASUS\Hermes\projects\<project_name>\rcm_matrix_<client>.html`
 
-**HTML ต้องมี (ตาราง 6 คอลัมน์):**
+**HTML ต้องมี (ตาราง 7 คอลัมน์ — DEFAULT ไม่รวม Poison):**
 
-| กิจกรรม | ความเสี่ยง | การควบคุมที่ควรมี | วิธีการตรวจสอบ | คำถามสัมภาษณ์ | Poison |
-|---------|-----------|-------------------|---------------|---------------|--------|
+| กระบวนการ | กิจกรรม | ความเสี่ยง | การควบคุมที่ควรมี | วิธีการตรวจสอบ | คำถามสัมภาษณ์ | ลักษณะควบคุม |
+|-----------|---------|-----------|-------------------|---------------|---------------|-------------|
 
 แต่ละแถว:
+- กระบวนการ → `contenteditable="false"` (display only, ใช้อ้างอิง SICT process code)
 - Activity → `contenteditable` (user ปรับชื่อกิจกรรมให้ตรงกับองค์กรได้)
 - Risk → `contenteditable`
 - Control → `contenteditable` (user เพิ่ม/แก้ไข control ได้)
 - Test → `contenteditable` (user ปรับ test procedure ได้)
 - Question → `contenteditable`
-- Poison → display only
+- Control Nature → display only
 
-ปุ่ม:
+**❌ Poison column — ห้ามใส่เป็น default** (user ไม่ต้องการ)
+
+**ฟีเจอร์บังคับ:**
 - 💾 **Save as HTML**
-- 🖨️ **Print / Save as PDF**
-- ➕ **Add Row** (เพิ่ม control เอง)
+- 🖨️ **Print / Save as PDF** (A3 landscape)
+- 🔍 **Search bar** — ค้นหาข้อความ กรองตามคอลัมน์ แสดงจำนวนผลลัพธ์
+- 📊 **Summary bar** — แสดงจำนวน processes, activities, controls ที่ครอบคลุม
+- 📏 **Styled scrollbar** — มองเห็นชัด ความสูง 12px
+- 📐 **Column max-width** — ป้องกันคอลัมน์ยาวเกินด้วย `max-width` + `word-break: break-word`
 
-ภาคผนวก: raw MCP output
+**ภาคผนวก:** raw MCP output ใน `<details><summary>` แบบพับได้
+
+ดูตัวอย่างที่สมบูรณ์ใน `references/rcm-html-template.md`
 
 ---
 
@@ -434,27 +528,44 @@ User ต้องให้ข้อมูล "การควบคุมที�
   </style>
 </head>
 <body>
-  <!-- Header -->
-  <!-- Content (contenteditable sections) -->
+  <!-- Header (clean, no icons — text only) -->
+  <!-- Toolbar: Save + Print buttons + Search bar -->
+  <!-- Summary bar: process count, coverage info -->
+  <!-- Table wrapper with visible scrollbar -->
   <!-- Appendix -->
-  <!-- Scripts (Save/Print buttons) -->
+  <!-- Scripts (Save/Print/Search) -->
 </body>
 </html>
 ```
 
 ### 2. CSS Requirements
-- ✅ ฟอนต์ไทย: `'Sarabun', 'Prompt', sans-serif`
+- ✅ ฟอนต์ไทย: `'Sarabun', 'Prompt', 'Tahoma', sans-serif`
 - ✅ ตารางมี borders, striped rows, hover effect
-- ✅ `contenteditable` elements มี border ล่าง dashed สีเทา
-- ✅ Print-friendly (`@media print` — ซ่อนปุ่ม, แสดงเต็มหน้า)
-- ✅ Responsive (max-width, overflow-x: auto สำหรับตาราง)
+- ✅ `contenteditable` elements มี border ล่าง dashed สีเทา, `cursor: text`
+- ✅ Print-friendly (`@media print` — ซ่อน toolbar/summary, แสดงเต็มหน้า)
+- ✅ **Visible styled scrollbar** — ใช้ `::-webkit-scrollbar` สไตล์ความสูง 12px, thumb สี #bdbdbd
+- ✅ **Column width constraints** — ใช้ `max-width` + `word-break: break-word` ป้องกันคอลัมน์ยาวเกิน
+- ✅ **Sticky header** — toolbar และ table header ติดด้านบนขณะ scroll
 
-### 3. Editable Sections
+### 3. Header Rules
+- ❌ **ห้ามใส่ icon/รูปแปลกๆ** ใน header — ใช้ text เท่านั้น (📋 emoji พอได้)
+- ✅ Header เป็น gradient สีน้ำเงินเข้ม (`#1a237e` → `#283593`)
+- ✅ แสดง: ชื่อรายงาน (h1) + metadata (ชื่อผู้จัดทำ, จำนวน processes/activities/controls)
+
+### 4. Search/Filter Bar (MANDATORY สำหรับ RCM/ตารางใหญ่)
+- ✅ `<input>` search box พร้อม `oninput` — ค้นหาข้อความในทุกแถว
+- ✅ `<select>` dropdown เลือกกรองเฉพาะคอลัมน์ (ทุกคอลัมน์ / กระบวนการ / กิจกรรม / ความเสี่ยง / การควบคุม)
+- ✅ ปุ่ม "✕ ล้าง" เพื่อ reset filter
+- ✅ ตัวนับผลลัพธ์ — แสดง "N / total รายการ"
+- ✅ ใช้ JavaScript `classList.add('hidden')` / `classList.remove('hidden')` ในการซ่อนแถว
+- ✅ เพิ่ม `data-proc`, `data-act`, `data-risk`, `data-ctrl` attributes บน `<tr>` เพื่อให้ search เร็ว
+
+### 5. Editable Sections
 - `<div contenteditable="true" class="editable">` สำหรับข้อความ
 - `<td contenteditable="true">` สำหรับเซลล์ตาราง
 - ต้องมี `data-original` attribute เก็บค่าเริ่มต้น
 
-### 4. Save Button
+### 6. Save Button
 ```html
 <button onclick="saveHTML()">💾 Save as HTML</button>
 <script>
@@ -464,24 +575,108 @@ function saveHTML() {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = document.title.replace(/[^a-z0-9ก-๙]/gi, '_') + '.html';
+  a.download = 'RCM_<CLIENT>_' + new Date().toISOString().slice(0,10) + '.html';
   a.click();
   URL.revokeObjectURL(url);
 }
 </script>
 ```
 
-### 5. Print/PDF Button
+### 7. Print/PDF Button
 ```html
 <button onclick="window.print()">🖨️ Print / Save as PDF</button>
 ```
+- ต้องมี `@media print` CSS ซ่อน toolbar/summary
+- `@page { size: A3 landscape; margin: 8mm; }` สำหรับตารางกว้าง
 
-### 6. Appendix
+### 8. Appendix
 - ต้องมี section "ภาคผนวก" ท้ายไฟล์เสมอ
 - แสดงข้อมูลดิบครบถ้วน:
   - Raw text จาก txt file ที่ user ให้
   - Raw output จาก MCP tools
-- ใช้ `<pre>` tag หรือ `<details><summary>` แบบพับได้
+- ใช้ `<details><summary>` แบบพับได้ (ไม่ใช้ `<pre>` เต็ม — ยาวเกิน)
+
+### 9. Default RCM Column Layout
+
+- ✅ **v1 (7 columns):** กระบวนการ | กิจกรรม | ความเสี่ยง | การควบคุมที่ควรมี | วิธีการตรวจสอบ | คำถามสัมภาษณ์ | ลักษณะควบคุม — สำหรับ 1-2 processes
+- ✅ **v3 (8 columns + expand):** # | กิจกรรม | ความเสี่ยง | การควบคุม | Policy | Procedure | KRI | วิธีการตรวจสอบ — **แนะนำสำหรับทุกโปรเจคใหม่** (ดู 9b)
+- ❌ **ห้ามใส่คอลัมน์ Poison เป็น default** — user ไม่ต้องการ (ใส่ใน expandable detail แทน)
+
+### 🆕 9a. Enhanced RCM Template (v2 — Sheet Tabs + Risk Tags)
+
+เมื่อสร้าง RCM แบบ multi-process (3+ processes) ให้ใช้ enhanced template จาก `references/rcm-html-template-v2.md` ซึ่งเพิ่ม:
+
+| Feature | รายละเอียด |
+|---------|-----------|
+| 📑 **Sheet Tabs** | ปุ่มนำทางแต่ละ process แสดงจำนวน rows เป็น badge — `switchProcess()` JS |
+| 📖/📕 **Expand/Collapse** | ปุ่มแสดงทุก Process หรือทีละ Process |
+| 🏷️ **Risk Category Badges** | แท็กสีตามประเภท (Operational=ส้ม, Fraud=แดง, Compliance=น้ำเงิน, Reporting=เขียว, ฯลฯ) |
+| 🔗 **Rowspan** | Activity code + name ยุบรวมข้ามแถว risk/control — ลดความซ้ำซ้อน |
+| 🔍 **Column Filter** | `<select>` 6 ตัวเลือก: ทุกคอลัมน์, กิจกรรม, ความเสี่ยง, การควบคุม, วิธีการตรวจสอบ, คำถาม |
+| 9️⃣ **9 Columns** | เพิ่มคอลัมน์ # (ลำดับ) + เปลี่ยน "กระบวนการ" เป็น "ประเภทความเสี่ยง" แบบ color tag |
+| 🎨 **kas-htmlformat** | Border style พร้อม print 16:9 PPT |
+
+**v2 Column Layout (9 columns):**
+| # | Column | Width |
+|---|--------|-------|
+| 1 | # (ลำดับ) | 55px |
+| 2 | กิจกรรม (code) | 90px |
+| 3 | ชื่อกิจกรรม | 200px |
+| 4 | ประเภทความเสี่ยง | 100px |
+| 5 | ความเสี่ยง | 280px |
+| 6 | การควบคุมที่ควรมี | 280px |
+| 7 | วิธีการตรวจสอบ | 240px |
+| 8 | คำถามสัมภาษณ์ | 200px |
+| 9 | ลักษณะควบคุม | 85px |
+
+### 🆕 9b. Interactive RCM Template (v3 — 8 Columns + Resize + Column Toggle + Expandable Detail)
+
+**v3 เป็น template หลักที่แนะนำสำหรับทุกโปรเจคใหม่** — พัฒนาจาก session SICT (2026-08-09)
+ดู template เต็มใน `references/rcm-html-template-v3.md`
+
+| Feature | รายละเอียด |
+|---------|-----------|
+| 8️⃣ **8 Columns** | #, กิจกรรม(code:name), ความเสี่ยง, การควบคุม, Policy, Procedure, KRI, วิธีการตรวจสอบ |
+| 📏 **Column Resize** | ลากขอบขวาของ header ปรับ width ได้ทุกคอลัมน์ |
+| ⚙️ **Column Toggle** | Dropdown checkbox แสดง/ซ่อนคอลัมน์ — #,กิจกรรม,ความเสี่ยง ล็อค 🔒 |
+| ▶ **Expandable Detail** | คลิก ▶ ข้างความเสี่ยง → แสดง Poison, Report, Validation, คำถามสัมภาษณ์ |
+| 📑 **Sheet Tabs** | 9 process tabs พร้อม row count badges (เหมือน v2) |
+| 🔍 **Search** | Full-text search พร้อม result counter |
+
+**v3 Column Layout (8 columns):**
+| # | Column | Source | Hideable | Width |
+|---|--------|--------|:---:|------:|
+| 1 | # | auto | 🔒 | 45px |
+| 2 | กิจกรรม | `code: name` merged, rowspan | 🔒 | 200px |
+| 3 | ความเสี่ยง + ▶ | `risk_name` | 🔒 | 280px |
+| 4 | การควบคุมที่ควรมี | `control_name` | ✅ | 280px |
+| 5 | Policy | `risk.policies[]` joined | ✅ | 280px |
+| 6 | Procedure | `risk.procedures[]` joined | ✅ | 280px |
+| 7 | KRI | `risk.indicator_name` | ✅ | 250px |
+| 8 | วิธีการตรวจสอบ | `control.tests[]` joined | ✅ | 350px |
+
+**v3 Detail Row (expandable):**
+| Field | Source |
+|-------|--------|
+| 🔴 Poison | `risk.poison` (โลภะ/โทสะ/โมหะ) |
+| 📈 Report | `risk.report_name` |
+| 📎 Validation | `risk.validations[]` (2 items) |
+| ❓ คำถามสัมภาษณ์ | `control.question_text` (from each control) |
+
+**Build Strategy สำหรับไฟล์ใหญ่ (15-25 MB):**
+1. `execute_code` → build CSS header → `write_file`
+2. `execute_code` → build body HTML → write to `_body.html`
+3. `execute_code` → build detail data JS + main JS → write to `_js.html`
+4. `terminal` → `cat header body js > final.html`
+
+**เมื่อไหร่ใช้ v3 vs v2 vs v1:**
+| สถานการณ์ | ใช้ |
+|-----------|-----|
+| 1 process, แก้ไขทีละรายการ | v1 (7 columns) |
+| 3+ processes, ต้องการ Risk Tags สี | v2 (9 columns + color badges) |
+| **ทุกโปรเจคใหม่, ลูกค้าดู presentation** | **v3 (8 columns + resize + toggle + expand)** |
+| ต้องการ Policy/Procedure/KRI ในคอลัมน์หลัก | v3 |
+| ต้องการปรับ layout หน้างาน (ซ่อนคอลัมน์, ปรับ width) | v3 |
 
 ---
 
@@ -502,16 +697,92 @@ C:\Users\ASUS\Hermes\projects\<project_name>\
 
 ## Common Pitfalls
 
-1. **MCP tools ไม่โหลดเข้า session** — tools ถูก inject ตอน startup ถ้าเพิ่ม MCP ทีหลังต้อง `/reload-mcp` หรือ `/reset`
-2. **Context overflow จาก full activity** — `mcp_rcm_get_activity` ส่งข้อมูลเยอะ (risks, controls, tests, policies, validations, procedures) → ดึงทีละ activity อย่าดึงทีเดียวหลายตัว
-3. **OAuth token หมดอายุ** — Cloudflare Workers OAuth token อาจหมดอายุ → `hermes mcp test rcm` ถ้า "invalid_token" → reconnect
-4. **Admin ยังไม่เพิ่ม email** — user จะได้ error "Unauthorized" → แจ้งติดต่อ Admin (Thanat) เพื่อเพิ่ม email ใน allowlist
-5. **HTML ภาษาไทยพัง** — ต้องใช้ `<meta charset="UTF-8">` และฟอนต์ที่รองรับไทย
-6. **`contenteditable` ในตาราง** — อย่าลืม `white-space: pre-wrap` ใน `<td contenteditable>` เพื่อรักษา line break
-7. **User แก้ไข HTML แล้ว แต่ save ไม่ได้** — ปุ่ม Save ต้องใช้ JavaScript `Blob` download — ต้องมี `<script>` block ใน HTML
+1. **🔴 MCP tools ไม่ปรากฏใน agent tool list (CRITICAL)** — แม้ `hermes mcp test rcm` จะแสดง "Tools discovered: 7" แต่ agent อาจไม่เห็น `mcp_rcm_*` ใน tool list ที่ใช้งานได้ สาเหตุ:
+   - Session ถูกเริ่มก่อน MCP server ถูก configure
+   - MCP tools ถูก reload แล้ว (`MCP tools reloaded`) แต่ไม่ inject เข้า turn ปัจจุบัน
+   - `mcp` Python package มี dependency issue (เช่น `pywin32` / `pywintypes` missing บน Windows sandbox)
+
+   **✅ วิธีแก้ (เรียงตามลำดับ):**
+     1. **Settings → MCP → ปุ่ม Reload MCP** → รอ notification "MCP tools reloaded" → `/reset`
+     2. ถ้ายังไม่ได้ → **Settings → MCP → เลือก rcm → Remove → Add ใหม่** (ใส่ JSON เดิม) → `/reset`
+     3. ถ้ายังไม่ได้ → **ปิด-เปิด Hermes Desktop ใหม่** (full restart)
+     4. 🆕 **ถ้ายังไม่ได้ → ใช้ `rcm_http_client.py` fallback** (ดู Workflow 0) — เรียก Cloudflare ตรงผ่าน HTTP ไม่ต้องพึ่ง MCP tool injection เลย
+   - **Verification หลัง `/reset`:** ส่งข้อความ "test" → agent ต้องเรียก `mcp_rcm_get_db_info` ได้ หรือใช้ `rcm_http_client.py`
+2. **🆕 `get_process_rcm` — tool ใหม่ที่ดึงทั้ง process ใน call เดียว** — ใช้แทน `get_process_overview` + `get_activity` ทีละตัว เร็วกว่ามาก (9 processes = 9 calls แทน 277+ calls)
+   - Parameters: `process_code`, `client_name`, `sectors` (list)
+   - ส่งคืนทุก activities (ที่ตรง sector), risks, controls, tests, questions
+   - Output ใหญ่ — ใช้ `execute_code` จัดการ batch processing
+   - **⚠️ ข้อจำกัดของ `query.py`:** `--list-activities` ไม่คืน `sector_code` — ถ้าต้องกรองตาม sector (จำเป็นเสมอสำหรับ audit universe/RCM) ใช้ Workaround #3 แทน
+2. **MCP tools ไม่โหลดเข้า session** — tools ถูก inject ตอน startup ถ้าเพิ่ม MCP ทีหลังต้อง `/reload-mcp` หรือ `/reset`
+3. **Context overflow จาก full activity** — `mcp_rcm_get_activity` ส่งข้อมูลเยอะ (risks, controls, tests, policies, validations, procedures) → ดึงทีละ activity อย่าดึงทีเดียวหลายตัว
+4. **OAuth token หมดอายุ** — Cloudflare Workers OAuth token อาจหมดอายุ → `hermes mcp test rcm` ถ้า "invalid_token" → reconnect
+5. **Admin ยังไม่เพิ่ม email** — user จะได้ error "Unauthorized" → แจ้งติดต่อ Admin (Thanat) เพื่อเพิ่ม email ใน allowlist
+6. **HTML ภาษาไทยพัง** — ต้องใช้ `<meta charset="UTF-8">` และฟอนต์ที่รองรับไทย
+7. **`contenteditable` ในตาราง** — อย่าลืม `white-space: pre-wrap` ใน `<td contenteditable>` เพื่อรักษา line break
+8. **User แก้ไข HTML แล้ว แต่ save ไม่ได้** — ปุ่ม Save ต้องใช้ JavaScript `Blob` download — ต้องมี `<script>` block ใน HTML
 8. **Print/PDF ไม่สวย** — ต้องมี `@media print` CSS เพื่อซ่อนปุ่ม, ปรับ margin, แสดงสีพื้นหลัง
-9. **⚠️ การเรียก MCP โดยไม่มี business justification** — ห้ามถาม "ขอข้อมูลทั้งหมดของ process P" โดยไม่ได้ระบุว่าทำไปทำไมและ project ไหน → ต้องมี project context เสมอ
-10. **⚠️ Agent พยายามวน loop ดึงข้อมูล** — agent อาจคิดว่า "ขอดึงทุก activity มาแคชไว้" → ห้ามเด็ดขาด! ต้องถาม user ก่อนทุกครั้งว่าจะเอาข้อมูล activity ไหน
+9. **🔴 Sticky header หาย (scroll แล้ว header ไม่ติด)** — เกิดจาก ancestor element มี `overflow: hidden` (เช่น `.process-panel { overflow: hidden; }`) → สร้าง clipping boundary ที่ทำลาย `position: sticky`. **วิธีแก้:** 
+   - ❌ ลบ `overflow: hidden` จาก parent ทุกตัวที่อยู่ระหว่าง scroll container กับ `<thead>`
+   - ✅ ใช้ parent-child pattern — `.scroll-outer` ถือ `overflow: auto`, `<thead>` ใช้ `position: sticky; top: 0; z-index: 10;`
+   - ✅ ตรวจสอบ chain: `.process-panel` → `.scroll-outer` → `table.rcm` → `thead` → `th` — ทุก ancestor ต้องไม่มี `overflow: hidden`
+   - แบบเก่า (V3/V4 มี bug นี้):
+   ```css
+   .scroll-outer { width: 100%; max-width: 100vw; overflow: auto; height: calc(100vh - 185px); }
+   table.rcm thead th { position: sticky; top: 0; }
+   ```
+10. **🔴 Horizontal scrollbar ไม่โผล่** — container ขยายตามตารางเพราะ `width: max-content`. **วิธีแก้:** ใช้ `table-layout: fixed` + กำหนด `min-width` ที่เกิน viewport + กำหนดความกว้างแต่ละคอลัมน์ผ่าน `th:nth-child(N)`:
+   ```css
+   table.rcm { table-layout: fixed; min-width: 1400px; width: 1400px; }
+   table.rcm th:nth-child(1), table.rcm td:nth-child(1) { width: 100px; }
+   table.rcm th:nth-child(2), table.rcm td:nth-child(2) { width: 200px; }
+   /* ... */
+   ```
+
+10. **⚠️ การเรียก MCP โดยไม่มี business justification** — ห้ามถาม "ขอข้อมูลทั้งหมดของ process P" โดยไม่ได้ระบุว่าทำไปทำไมและ project ไหน → ต้องมี project context เสมอ
+11. **⚠️ Agent พยายามวน loop ดึงข้อมูล** — agent อาจคิดว่า "ขอดึงทุก activity มาแคชไว้" → ห้ามเด็ดขาด! ต้องถาม user ก่อนทุกครั้งว่าจะเอาข้อมูล activity ไหน
+11. **⚠️ Agent ถาม user ก่อนค้น internet** — เมื่อสกัดข้อมูลจากไฟล์ (NOB) แล้วยังไม่ครบ → agent ต้องค้น internet (Google Search Grounding) **ก่อน** ถาม user ไม่ใช่ถาม user ก่อนแล้วให้ user บอกให้ค้นทีหลัง → เป็นการเสียเวลาผู้ใช้
+12. **HTML RCM header ห้ามใส่ icon/รูปแปลกๆ** — ใช้ text + emoji เท่านั้น (📋) — user feedback: "บรรทัดบนสุดมันแปลกๆ"
+13. **Pitch Deck → RCM Mapping** — เมื่อ user มี pitch deck/proposal ที่ระบุ audit universe processes ไว้แล้ว:
+    1. Map processes ของลูกค้า → RCM processes (ดูว่า process ไหนตรงกับ RCM process code ไหน)
+    2. ใช้ `get_process_rcm` ดึง RCM สำหรับทุก process ที่เกี่ยวข้อง (9 calls = จบ)
+    3. กรองเอาเฉพาะ UNVS + sector-specific activities ที่ตรงกับธุรกิจ
+    4. เลือก 15-20 กิจกรรมสำคัญที่สุดตาม risk profile ของลูกค้า (high-risk processes ก่อน)
+    5. สร้าง HTML RCM พร้อม search/filter, scrollbar, save/print
+    6. ตั้งชื่อไฟล์: `RCM_<CLIENT>_v<N>.html`
+15. **🔴 Tests และ Questions อยู่ที่ CONTROL level ไม่ใช่ RISK level** — `get_process_rcm` ส่ง tests/question เป็น field ในแต่ละ control ไม่ใช่ใน risk:
+   - ❌ **ผิด:** `risk.get("tests")` / `risk.get("questions")` — จะได้ [] เสมอ
+   - ✅ **ถูก:** `control["tests"]` (list ของ `{test_code, test_name}`) และ `control["question_text"]` (string)
+   - แต่ละ control มี 2 tests และ 1 question — ต้องวนลูป `risk["controls"]` แล้วดึงจากแต่ละ control
+   - **ตรวจสอบง่ายๆ:** ถ้าคอลัมน์วิธีการตรวจสอบกับคำถามสัมภาษณ์ว่างทั้งหมด → แสดงว่าดึงผิด level
+
+16. **🔴 Risk-level fields ที่มีแต่ยังไม่ได้ใช้ใน default HTML** — ทุก risk มี field เหล่านี้ (100% coverage):
+   - `poison`: โลภะ / โทสะ / โมหะ
+   - `indicator_code`, `indicator_name`: KRI (ตัวชี้วัดความเสี่ยง)
+   - `validations[]`: หลักฐานการตรวจสอบ (2 รายการต่อ risk, มี code + text)
+   - `policies[]`: นโยบายที่เกี่ยวข้อง (2 ฉบับต่อ risk, มี code + text)
+   - `procedures[]`: ขั้นตอนปฏิบัติงาน (2 ขั้นตอนต่อ risk, มี code + text)
+   - `report_code`, `report_name`: รายงานที่เกี่ยวข้อง
+   - **ถ้า user ถามถึง policy/procedure** → field เหล่านี้พร้อมใช้ทันที ไม่ต้อง query เพิ่ม
+   - **วิธีเพิ่มลง HTML:** ใช้ expandable detail row (คลิกแถว risk แล้ว expand แสดง detail) ดีกว่าเพิ่มคอลัมน์เพราะตารางกว้างอยู่แล้ว
+   - ดูโครงสร้างเต็มใน `references/database-schema.md`
+
+17. **⚡ Batch RCM via local dataset files (fastest fallback)** — เมื่อ MCP `get_process_rcm` ไม่ inject และต้องการ RCM เต็มทั้ง project แบบกรอง sector:
+    1. `cd C:\\Users\\ASUS\\Hermes\\rcm-database && git pull origin main` — sync ก่อนทุกครั้ง
+    2. อ่าน `dataset_{PROCESS}.json` โดยตรงด้วย `json.load()` — เร็วกว่า `query.py` มากเพราะไม่ต้อง subprocess
+    3. แต่ละ activity ใน dataset มี `sector_code` → กรองเฉพาะ sectors ของลูกค้า (UNVS + sector-specific)
+    4. แปลงเป็น RCM row format: activity → risk → control → test/question → indicator
+    5. สะสมใน JSON output file → สร้าง HTML
+    6. **ข้อดี:** 9 processes ใน ~3 วินาที (vs 289 MCP calls), ไม่ต้องพึ่ง MCP injection, ได้ sector_code ครบ
+    7. **ข้อควรระวัง:** ไฟล์ output ใหญ่ (~11MB JSON, ~17MB HTML สำหรับ 289 activities) — ใช้ `execute_code` เขียนไฟล์โดยตรง ไม่ dump เข้า context
+    8. **Data Protection:** ยังต้องกรองตาม sector ของลูกค้า — อ่านเฉพาะ dataset files ที่เกี่ยวข้อง, กรองเฉพาะ sectors ที่ตรง
+
+18. **🔴 Activity list แสดงแค่ code (ไม่โชว์ชื่อเต็ม)** — `data-act` attribute เก็บเฉพาะ activity code (เช่น \"AF-UNVS-001\") ไม่ใช่ชื่อเต็ม. ดึงชื่อเต็มจาก `td[data-col=\"1\"]` หรือ `td.act-merge` → `.textContent.trim()`
+
+19. **🔴 Toolbar 2 แถว** — user ต้องการแถวเดียว. ใช้ `flex-wrap: nowrap`, `overflow-x: auto`, ลด padding/font, ย่อ label เหลือ icon (`title` แทน), `flex-shrink: 0`
+
+20. **🔴 Split-panel sidebar ถูกปฏิเสธ** (V4) — user ชอบ popup modal สำหรับ filter (V5 pattern: `openActPicker()` → modal checklist + apply)
+
+21. **🔴 contenteditable cell แก้ไขผ่าน script** — ใช้ `.textContent` ไม่ใช่ `.innerText` หรือ `.innerHTML`
 
 ---
 
@@ -523,7 +794,8 @@ C:\Users\ASUS\Hermes\projects\<project_name>\
 - [ ] `nob_raw.txt` ถูกบันทึก
 - [ ] `nob_summary.html` แก้ไขได้ + save/print ได้
 - [ ] `audit_universe.html` มี activity list ที่ถูกต้อง + checkbox ทำงาน
-- [ ] `rcm_matrix_<process>.html` มี 6 คอลัมน์ครบ + แก้ไขได้
+- [ ] `rcm_matrix_<process>.html` มี 7 คอลัมน์ครบ + แก้ไขได้ (หรือใช้ v2 template ถ้า multi-process)
+- [ ] `rcm_matrix_<client>.html` (v2) มี Sheet Tabs + Risk Tags + Expand/Collapse ถ้า 3+ processes
 - [ ] `control_analysis_<process>.html` มี ✅/⚠️/🔴 + test procedures ที่ปรับแล้ว
 - [ ] ทุก HTML มีภาคผนวกแสดงข้อมูลดิบ
 - [ ] ⛔ Data Protection: ไม่มีการ dump ทั้งฐานข้อมูล (get_activity ≤ 20 ครั้ง)

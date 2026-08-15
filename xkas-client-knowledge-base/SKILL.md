@@ -1,6 +1,7 @@
 ---
 name: xkas-client-knowledge-base
 description: ตั้งค่าและบริหารฐานข้อมูลลูกค้ากลางบน OneDrive แชร์ ให้ทีม IA หลายคนใช้ร่วมกัน — สร้างโฟลเดอร์, template, AI สรุป dashboard อัตโนมัติทั้งรายลูกค้าและภาพรวม
+version: 1.0.0
 tags: [xkas, internal-audit, onedrive, collaboration, dashboard, knowledge-base, thai]
 ---
 
