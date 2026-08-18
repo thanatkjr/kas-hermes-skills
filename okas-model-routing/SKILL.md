@@ -1,7 +1,7 @@
 ---
 name: okas-model-routing
 description: "ตั้งค่า model routing: DeepSeek V4 Pro (opencode-go) เป็นหลัก, Gemini (native) สำหรับ vision/search — MoA ปิดเสมอ, ไม่พึ่ง openrouter"
-version: 5.0.0
+version: 5.1.0
 author: Thanat
 license: MIT
 platforms: [linux, macos, windows]
@@ -85,6 +85,32 @@ default คือ `deepseek-v4-pro` (opencode-go) — user เปลี่ยน
 - `moa.enabled: false`
 
 > 📌 openrouter เป็นตัวเลือกเสริม (optional) — config หลักไม่จำเป็นต้องมี
+
+## 📊 ตรวจยอดใช้งาน OpenCode Go (usage/credit)
+
+OpenCode Go เป็น subscription **$10/เดือน ไม่ใช่ credit balance** — API ให้แค่ **% โควตาที่ใช้ไป** ใน 3 กรอบเวลา (5 ชม. rolling / รายสัปดาห์ / รายเดือน)
+
+- Endpoint: `GET https://opencode.ai/zen/go/v1/usage` (Bearer `OPENCODE_GO_API_KEY`) → `{"usage":{"rolling|weekly|monthly":{status,percent,resetsAt}}}`
+- ⚠️ API **ไม่มี CORS header** → browser fetch ตรง ๆ ไม่ได้ ต้องผ่าน local proxy (Python `urllib` ไม่ติด CORS)
+- Tool สำเร็จรูป: `C:\Users\ASUS\opencode-balance\` — `opencode_balance.py widget` (widget ลอยจอ always-on-top) / `server` (เว็บ dashboard เปิดจากมือถือผ่าน LAN)
+
+รายละเอียดเต็ม + โค้ดอ้างอิง: `references/opencode-go-usage-api.md`
+
+## 🔍 วินิจฉัย Vision ใช้ไม่ได้ (อ่านรูปแล้ว error)
+
+**Symptom:** `vision_analyze` คืน error `unknown variant 'image_url', expected 'text'` พร้อมข้อความ "Error from provider (Console Go)" / opencode-go
+
+**สาเหตุ:** ตัว auxiliary vision provider (`gemini`) ใช้ไม่ได้ (key หาย/ชื่อผิด) → Hermes fallback ส่งรูปไปที่ main model (`deepseek-v4-pro` ผ่าน opencode-go) ซึ่งเป็น text-only → reject `image_url`
+
+**วิธีเช็ค/แก้ (เรียงตามลำดับ):**
+1. เช็ค key ใน `.env` (`C:\Users\ASUS\AppData\Local\hermes\.env`) — native `gemini` provider อ่าน `GOOGLE_API_KEY` หรือ `GEMINI_API_KEY` เท่านั้น **ไม่รู้จัก** `GOOGLE_AI_API_KEY`
+   ```bash
+   grep -nE "GOOGLE_API_KEY|GEMINI_API_KEY|GOOGLE_AI_API_KEY" ~/AppData/Local/hermes/.env
+   ```
+2. ถ้ามีแต่ `GOOGLE_AI_API_KEY` → เพิ่ม `GOOGLE_API_KEY=<ค่าเดียวกัน>` (copy ค่าเดิมมา) แล้ว `/reset`
+3. ถ้า key ครบแล้วยัง error → เช็ค `hermes config show` ว่า `Auxiliary Models → Vision = provider=gemini, model=gemini-3.6-flash`
+
+> 💡 key `GOOGLE_AI_API_KEY` (ใช้โดย google_search.py) กับ `GOOGLE_API_KEY` (ใช้โดย native gemini vision provider) เป็น key คนละชื่อแต่เอา value เดียวกันได้ — ตั้งคู่กันไว้ทั้งสองชื่อ กัน vision ล่ม
 
 ## ⚠️ สำหรับทีม (install.bat)
 

@@ -1,7 +1,7 @@
 ---
 name: kas-rcm-setup
 description: ตั้งค่าและใช้งาน RCM MCP Server สำหรับงานตรวจสอบภายใน — สอบถาม Nature of Business, สร้าง Audit Universe, Standard Risk Control Matrix, และ Control Analysis Report พร้อม output เป็น HTML ที่แก้ไขได้และ save เป็น PDF ได้
-version: 1.1.0
+version: 1.2.0
 author: KAS / Thanat Kerdcharoen
 license: Proprietary — KAS Internal Use Only
 metadata:
@@ -144,6 +144,8 @@ client.close()
 | `get_risk_detail(process_code, risk_code)` | `process_code, risk_code: str` | `dict` — all risk fields |
 | `get_process_rcm(process_code, sector_code)` | `process_code, sector_code: str` | `dict` — full RCM for UNVS+sector |
 
+> ⚠️ **`find_activities` ยังไม่มี wrapper ใน `rcm_http_client.py`** — เรียกผ่าน generic helper ได้เลย: `client._tool("find_activities", {"keywords_activity": [...], "keywords_person": [...], "keywords_doc": [...], "process_code": "P", "sector_code": "FOOD", "min_facets": 1})` — คืน `{total_matched, returned, capped, facets_supplied, min_facets, results[]}` โดย **cap = 20 results เสมอ** (ดู rcm-knowledge)
+
 ### ข้อดี
 - ✅ ไม่ต้องพึ่ง MCP tool injection
 - ✅ ไม่ต้องใช้ `mcp` SDK (ไม่มี dependency `pywin32`)
@@ -197,7 +199,7 @@ hermes mcp add rcm --url "https://rcm-mcp-server.thanatkjr.workers.dev/mcp"
 
 ```bash
 hermes mcp list        # ต้องเห็น rcm: ✓ enabled
-hermes mcp test rcm    # ต้องเห็น "✓ Connected" + "✓ Tools discovered: 6"
+hermes mcp test rcm    # ต้องเห็น "✓ Connected" + "✓ Tools discovered: 8"
 ```
 
 ถ้าไม่ผ่าน → แจ้ง user ติดต่อ Admin เพื่อเพิ่ม email ใน allowlist
@@ -213,11 +215,11 @@ hermes mcp test rcm    # ต้องเห็น "✓ Connected" + "✓ Tools d
 | `mcp_rcm_list_processes` | รายการ 10 processes (ELC, P, R, IC, OP, HR, AF, FA, IT, SHE) | เรียกโดยตรง |
 | `mcp_rcm_get_process_overview` | กิจกรรมทั้งหมดใน 1 process (codes + names) | ส่ง `process_code` |
 | `mcp_rcm_search_risks` | ค้นหา risks ด้วย keyword ไทย/อังกฤษ | ส่ง `keyword` และ optional filters |
+| `mcp_rcm_find_activities` | 🆕 ค้นหากิจกรรมแบบ intersection 3 มิติ (ขั้นตอน/ผู้รับผิดชอบ/เอกสาร) — คืน `facets_hit` + `matched` | ส่ง `keywords_activity`, `keywords_person`, `keywords_doc`, `process_code`, optional `sector_code`/`min_facets` |
 | `mcp_rcm_get_activity` | ดู 1 activity แบบเต็ม (risks, controls, tests, policies, validations, procedures) | ส่ง `process_code` + `activity_code` |
 | `mcp_rcm_get_risk_detail` | ดู 1 risk พร้อมทุก field (poison, indicator, validations, policies, procedures, report, controls, tests) | ส่ง `process_code` + `risk_code` |
 | `mcp_rcm_get_process_rcm` | 🆕 ดึง RCM ทั้ง process แบบ scoped (กรองตาม sector) — คืน risks/controls/tests/questions ครบใน call เดียว | ส่ง `process_code`, `sector_code` |
 | `mcp_rcm_get_db_info` | ข้อมูล version, last update, record counts | เรียกโดยตรง |
-| `mcp_rcm_get_process_rcm` | 🆕 ดึง RCM เต็ม 1 process ใน call เดียว — ครบทุก activities, risks, controls, tests, questions (scoped ตาม sector) | ส่ง `process_code`, `sector_code` |
 
 ---
 
@@ -240,10 +242,9 @@ hermes mcp list
 hermes mcp test rcm
 ```
 
-- ✅ `✓ Connected` + `✓ Tools discovered: 6` → พร้อมทำงาน
+- ✅ `✓ Connected` + `✓ Tools discovered: 8` → พร้อมทำงาน
 - ❌ `✗ Failed` → 
-  - "invalid_token" → user ยังไม่ได้ OAuth login → ให้เปิด Settings → MCP → Edit server → reconnect
-  - "Connection refused" → Cloudflare Worker อาจ offline → แจ้ง admin
+  - "invalid_token" / "401" → token หมดอายุ → **รัน `rcm_http_client.py --tool get_db_info` เพื่อ refresh อัตโนมัติ** (ดู Common Pitfall #4) — ไม่ต้อง reconnect เองเว้นแต่ refresh_token ใช้ไม่ได้แล้ว
 
 ### Step 1.3: ตรวจสอบ tools
 
@@ -351,6 +352,8 @@ hermes mcp test rcm
 📌 **UNVS (Universal) activities ใช้ได้กับทุกธุรกิจ** — ต้องรวมเสมอ
 
 ### Step 3.2: ดึง activity list จาก MCP
+
+> 🆕 **แนะนำ:** ถ้า user ให้ keyword/ข้อมูลกระบวนการมา → ใช้ `find_activities` (intersection 3 มิติ: `keywords_activity` + `keywords_person` + `keywords_doc` + `process_code`) แทนการไล่ดู list ทั้งหมด — ดู workflow เต็มใน skill `rcm-knowledge`
 
 เรียก `mcp_rcm_get_process_overview` สำหรับทุก process ที่เกี่ยวข้อง:
 
@@ -508,6 +511,80 @@ User ต้องให้ข้อมูล "การควบคุมที�
 ภาคผนวก:
 - Raw MCP output
 - Raw existing controls (txt file content)
+
+---
+
+## 🆕 Workflow 6: Interactive RCM Builder (Sector → Process → find_activities → RCM)
+
+**Goal:** สร้าง RCM / policy & procedure แบบ interactive — user เลือก sector + process ผ่าน checkbox → ให้ข้อมูลกระบวนการ (ขั้นตอน/คน/เอกสาร) → `find_activities` คัดกรองกิจกรรมที่เกี่ยวข้องจริง → ดึง RCM เต็ม → output HTML ตาม `kas-rcm-v1`
+
+ใช้ workflow นี้เมื่อ user ต้องการทำ RCM หรือ policy/procedure ของธุรกิจใด ๆ — แทนการไล่ activity list ทั้งหมด (848 activities) ด้วย `find_activities` (intersection 3 มิติ)
+
+> 📌 sector codes ครบ 31 ตัว + ชื่อไทย + 9 หมวด → `references/sector-codes.md`
+
+### Step 0: ระบุ industry/sector เบื้องต้น
+
+1. ถาม user ว่าเป็นธุรกิจอะไร (1-2 ประโยค) — ขาย/บริการอะไร
+2. ระบุ sector code เบื้องต้นจาก `references/sector-codes.md`
+
+### Step 1: เลือก sector + process (checkbox)
+
+**Sector:**
+1. แสดง 31 sector codes พร้อมชื่อไทย + หมวด (จาก `references/sector-codes.md`) เป็น checkbox
+2. ให้ user ติ๊กเลือก sector ที่ตรงกับธุรกิจ (เลือกได้หลายตัว)
+   - ⚠️ UNVS (Universal) ไม่ต้องให้เลือก — `get_process_rcm` รวม UNVS ให้อัตโนมัติเสมอ
+
+**Process:**
+1. เรียก `list_processes()` → 10 processes พร้อมชื่อไทย
+2. แสดงเป็น checkbox ให้ user ติ๊กเลือก process ที่ต้องการ
+
+### Step 2: รับข้อมูลกระบวนการ (ขั้นตอน/บุคลากร/เอกสาร)
+
+ถาม user ให้ข้อมูลกระบวนการ **เท่าที่มี** (ไม่ต้องครบ) — 3 กลุ่ม:
+1. **ขั้นตอน/กิจกรรม** เช่น "ขอซื้อ, เปรียบเทียบราคา, ตรวจรับ"
+2. **บุคลากร/หน่วยงาน** เช่น "ผู้จัดการฝ่ายจัดซื้อ, คณะกรรมการจัดซื้อ"
+3. **เอกสาร/ฟอร์ม/รายงาน** เช่น "ใบขอซื้อ, ใบสั่งซื้อ, ใบกำกับภาษี"
+   - ⚠️ ห้ามใส่ระบบ IT (ERP/WMS) ในกลุ่มเอกสาร
+
+⚠️ **บันทึกข้อมูลดิบทันที** → `C:\Users\ASUS\Hermes\projects\<project_name>\process_input.txt` (กันข้อมูลหาย)
+
+### Step 3: find_activities match
+
+1. สกัด keyword 3 กลุ่มจาก Step 2
+2. เรียก `find_activities(keywords_activity, keywords_person, keywords_doc, process_code, sector_code)`
+   - แคบด้วย `process_code` + `sector_code` ให้มากที่สุด (ลดผลลัพธ์เกิน cap)
+3. อ่านผล: แต่ละ result มี `activity_code`, `activity_name`, `sector_code`, `facets_hit` (0-3), `score`, `matched`
+
+### Step 4: แสดง 3 กลุ่มให้ user ติ๊ก confirm
+
+| กลุ่ม | เงื่อนไข | ความหมาย |
+|-------|---------|-----------|
+| A) Match ตรง | `facets_hit` 2-3 | ตรงกับข้อมูล user มากที่สุด |
+| B) น่าสนใจ | `facets_hit` 1 | ตรงบางมิติ — เผื่อ user เลือกเพิ่ม |
+| C) ใน sector ไม่ match | sector_code ตรงแต่ไม่ match keyword | จาก `get_process_overview` กรอง sector แล้วลบ A+B ออก |
+
+- แสดง `matched` field ให้ user เห็นว่า "ตรงเพราะ keyword ตัวไหน" (UX)
+- ให้ user ติ๊ก confirm กิจกรรมที่จะเอาเข้า RCM
+
+### Step 5: ดึง RCM เต็ม
+
+1. เรียก `get_process_rcm(process_code, sector_code)` สำหรับแต่ละ process ที่เลือก
+2. กรองเอาเฉพาะ activity_code ที่ user เลือกใน Step 4
+3. เลือกหลาย sector → เรียกทีละ sector (1 call = 1 sector engagement)
+
+### Step 6: สร้าง RCM HTML + ผสานข้อมูล Step 2
+
+1. สร้าง RCM HTML ตาม skill `kas-rcm-v1` (หรือ template v3 ใน skill นี้)
+2. **ผสานข้อมูล Step 2 เข้า test procedures / คำถามสัมภาษณ์** — ปรับภาษาให้ตรงธุรกิจ
+   - ⚠️ เนื้อหา RCM (risk/control/test) ต้องมาจาก database เท่านั้น — ข้อมูล Step 2 ใช้**ปรับ** test/คำถามให้ตรงธุรกิจ ไม่ใช่แต่ง control ใหม่ (ยึด R2: Zero Fabrication)
+
+### ⚠️ Pitfalls เฉพาะ workflow นี้
+
+1. **`find_activities` cap = 20 results** — ถ้า `total_matched` > 20 จะถูกตัด (`capped: true`) → แคบ keyword + process + sector ให้มากที่สุดก่อนเรียก หรือวนหลายชุด keyword
+2. **sector list ไม่ต้อง scan ทุกครั้ง** — ใช้ `references/sector-codes.md` (31 codes ครบ) ไม่ต้อง `get_process_overview` 10 ครั้งเพื่อหา sector
+3. **กลุ่ม C ต้องดึงจาก `get_process_overview`** — `find_activities` คืนเฉพาะที่ match keyword ไม่คืน "ใน sector ทั้งหมด" → กรองเองจาก overview
+4. **UNVS รวมอัตโนมัติ** — ไม่ต้องให้ user เลือก UNVS ซ้ำ
+5. **keywords_doc ห้ามใส่ระบบ IT** — ERP/WMS ไม่ใช่เอกสาร
 
 ---
 
@@ -697,7 +774,7 @@ C:\Users\ASUS\Hermes\projects\<project_name>\
 
 ## Common Pitfalls
 
-1. **🔴 MCP tools ไม่ปรากฏใน agent tool list (CRITICAL)** — แม้ `hermes mcp test rcm` จะแสดง "Tools discovered: 7" แต่ agent อาจไม่เห็น `mcp_rcm_*` ใน tool list ที่ใช้งานได้ สาเหตุ:
+1. **🔴 MCP tools ไม่ปรากฏใน agent tool list (CRITICAL)** — แม้ `hermes mcp test rcm` จะแสดง "Tools discovered: 8" แต่ agent อาจไม่เห็น `mcp_rcm_*` ใน tool list ที่ใช้งานได้ สาเหตุ:
    - Session ถูกเริ่มก่อน MCP server ถูก configure
    - MCP tools ถูก reload แล้ว (`MCP tools reloaded`) แต่ไม่ inject เข้า turn ปัจจุบัน
    - `mcp` Python package มี dependency issue (เช่น `pywin32` / `pywintypes` missing บน Windows sandbox)
@@ -715,7 +792,13 @@ C:\Users\ASUS\Hermes\projects\<project_name>\
    - **⚠️ ข้อจำกัดของ `query.py`:** `--list-activities` ไม่คืน `sector_code` — ถ้าต้องกรองตาม sector (จำเป็นเสมอสำหรับ audit universe/RCM) ใช้ Workaround #3 แทน
 2. **MCP tools ไม่โหลดเข้า session** — tools ถูก inject ตอน startup ถ้าเพิ่ม MCP ทีหลังต้อง `/reload-mcp` หรือ `/reset`
 3. **Context overflow จาก full activity** — `mcp_rcm_get_activity` ส่งข้อมูลเยอะ (risks, controls, tests, policies, validations, procedures) → ดึงทีละ activity อย่าดึงทีเดียวหลายตัว
-4. **OAuth token หมดอายุ** — Cloudflare Workers OAuth token อาจหมดอายุ → `hermes mcp test rcm` ถ้า "invalid_token" → reconnect
+4. **OAuth token หมดอายุ** — Cloudflare Workers OAuth token มีอายุ ~1 ชั่วโมง (access token) และจะหมดอายุถ้าไม่มีการเรียกใช้ — `hermes mcp test rcm` ถ้า "invalid_token" / "401" → **✅ วิธีแก้เร็วสุด: รัน `rcm_http_client.py` ตัวเดียวก็ refresh ให้เสร็จ:**
+   ```bash
+   cd "C:\Users\ASUS\AppData\Local\hermes\skills\audit\kas-rcm-setup\scripts"
+   python rcm_http_client.py --tool get_db_info
+   ```
+   ตัว client จะเจอ HTTP 401 → เรียก `_refresh_token()` (refresh_token grant) อัตโนมัติ → เขียน token ใหม่กลับ `mcp-tokens/rcm.json` → ใช้ได้ต่อทันที **ไม่ต้องไป Settings → MCP → reconnect เอง** (reconnect คือทางเลือกเฉพาะกรณี token หมดอายุแล้ว refresh_token ก็ใช้ไม่ได้ หรือ user ยังไม่เคย OAuth login เลย)
+   - **เช็คอายุ token ก่อน:** `python -c "import json,time; d=json.load(open(r'C:\Users\ASUS\AppData\Local\hermes\mcp-tokens\rcm.json')); print('expired' if time.time()>d['expires_at'] else f\"{int((d['expires_at']-time.time())/60)} min left\")"`
 5. **Admin ยังไม่เพิ่ม email** — user จะได้ error "Unauthorized" → แจ้งติดต่อ Admin (Thanat) เพื่อเพิ่ม email ใน allowlist
 6. **HTML ภาษาไทยพัง** — ต้องใช้ `<meta charset="UTF-8">` และฟอนต์ที่รองรับไทย
 7. **`contenteditable` ในตาราง** — อย่าลืม `white-space: pre-wrap` ใน `<td contenteditable>` เพื่อรักษา line break
@@ -766,15 +849,7 @@ C:\Users\ASUS\Hermes\projects\<project_name>\
    - **วิธีเพิ่มลง HTML:** ใช้ expandable detail row (คลิกแถว risk แล้ว expand แสดง detail) ดีกว่าเพิ่มคอลัมน์เพราะตารางกว้างอยู่แล้ว
    - ดูโครงสร้างเต็มใน `references/database-schema.md`
 
-17. **⚡ Batch RCM via local dataset files (fastest fallback)** — เมื่อ MCP `get_process_rcm` ไม่ inject และต้องการ RCM เต็มทั้ง project แบบกรอง sector:
-    1. `cd C:\\Users\\ASUS\\Hermes\\rcm-database && git pull origin main` — sync ก่อนทุกครั้ง
-    2. อ่าน `dataset_{PROCESS}.json` โดยตรงด้วย `json.load()` — เร็วกว่า `query.py` มากเพราะไม่ต้อง subprocess
-    3. แต่ละ activity ใน dataset มี `sector_code` → กรองเฉพาะ sectors ของลูกค้า (UNVS + sector-specific)
-    4. แปลงเป็น RCM row format: activity → risk → control → test/question → indicator
-    5. สะสมใน JSON output file → สร้าง HTML
-    6. **ข้อดี:** 9 processes ใน ~3 วินาที (vs 289 MCP calls), ไม่ต้องพึ่ง MCP injection, ได้ sector_code ครบ
-    7. **ข้อควรระวัง:** ไฟล์ output ใหญ่ (~11MB JSON, ~17MB HTML สำหรับ 289 activities) — ใช้ `execute_code` เขียนไฟล์โดยตรง ไม่ dump เข้า context
-    8. **Data Protection:** ยังต้องกรองตาม sector ของลูกค้า — อ่านเฉพาะ dataset files ที่เกี่ยวข้อง, กรองเฉพาะ sectors ที่ตรง
+17. **⛔ ห้ามใช้ local dataset files (R5 — ใช้ MCP เท่านั้น)** — เมื่อ `get_process_rcm` ไม่ inject อย่า fallback ไป local clone/`dataset_*.json`/`query.py` เด็ดขาด (ขัด Data Protection Policy) — ใช้ `rcm_http_client.py` (ใน `scripts/`) เรียก Cloudflare ตรงผ่าน HTTP แทน (ดู Workflow 0)
 
 18. **🔴 Activity list แสดงแค่ code (ไม่โชว์ชื่อเต็ม)** — `data-act` attribute เก็บเฉพาะ activity code (เช่น \"AF-UNVS-001\") ไม่ใช่ชื่อเต็ม. ดึงชื่อเต็มจาก `td[data-col=\"1\"]` หรือ `td.act-merge` → `.textContent.trim()`
 
@@ -784,11 +859,17 @@ C:\Users\ASUS\Hermes\projects\<project_name>\
 
 21. **🔴 contenteditable cell แก้ไขผ่าน script** — ใช้ `.textContent` ไม่ใช่ `.innerText` หรือ `.innerHTML`
 
+22. **🔴 ไม่มี tool `list_sectors` — ใช้ `references/sector-codes.md`** — database มี **31 sector codes** (DB v4) แต่ไม่มี tool คืนรายชื่อ sector โดยตรง → ใช้ `references/sector-codes.md` (31 codes + ชื่อไทย + 9 หมวด, Admin confirm 2026-08-17) ได้เลย ไม่ต้อง derive ใหม่ทุกครั้ง (`references/sector-mapping.md` เป็นไฟล์เก่า เก็บ detail การ parse SET ไว้ แต่ canonical = sector-codes.md)
+
+23. **🔴 `find_activities` มี cap = 20 results** — output มี `total_matched` / `returned` / `capped`; ถ้า `capped: true` แปลว่ามี match เกิน 20 ถูกตัด → ต้องแคบ keyword + `process_code` + `sector_code` ให้มากที่สุดก่อนเรียก หรือวนเรียกหลายชุด keyword โครงสร้าง result: `{activity_code, activity_name, process_code, sector_code, facets_hit, score, matched:{activity[],person[],doc[]}}` — `sector_code` ใช้ filter ต่อได้
+
+24. **`rcm_http_client.py` ใช้ `_tool(name, args)` เรียก tool ใดก็ได้** — แม้ client ยังไม่มี wrapper (เช่น `find_activities`) ก็เรียก `client._tool("find_activities", {...})` ได้ตรง ๆ เป็น escape hatch สำหรับ tool ใหม่ที่ยังไม่ได้ wrap
+
 ---
 
 ## Verification Checklist
 
-- [ ] `hermes mcp test rcm` → ✓ Connected, ✓ Tools discovered: 6
+- [ ] `hermes mcp test rcm` → ✓ Connected, ✓ Tools discovered: 8
 - [ ] `mcp_rcm_get_db_info` ทำงานได้
 - [ ] NOB interview ครบ 7 หัวข้อ
 - [ ] `nob_raw.txt` ถูกบันทึก

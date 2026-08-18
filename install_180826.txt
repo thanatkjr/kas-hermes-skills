@@ -1,0 +1,79 @@
+KAS/OKAS Hermes Skills Installer v18.08.26
+=================================================
+
+ติดตั้ง / อัปเดต / ถอน Skills อัตโนมัติ (double-click แล้วรอจบ)
+
+─────────────────────────────────────────────────
+🔄 อัปเดต (5 skill)
+─────────────────────────────────────────────────
+
+1. kas-rcm-setup            v1.1.0 → v1.2.0
+   + Workflow 6: Interactive RCM Builder (เลือก Sector → Process
+     → ใส่ข้อมูลกระบวนการ → find_activities → สร้าง RCM)
+   + ฐานข้อมูล sector ครบ 31 กลุ่ม พร้อมชื่อไทย (อิง SET)
+
+2. kas-htmlformat           v1.0.0 → v1.1.0
+   + Template SOP Review (แก้ไขได้ + export JSON/Text)
+   + Pure CSS Bar Charts (แทน Chart.js — แสดงผลได้บน file://)
+   + Business Model Canvas, Interactive Editable Pattern
+   + กฎ: เขียนภาษาไทยเต็ม ไม่ย่อ, ใช้ write_file ไม่ใช้ execute_code
+
+3. kas-ia-report-helper     v1.0.0 → v1.1.0
+   + ฟอนต์ไทยใน Word (python-docx) — ตั้งครบ w:rFonts 4 attribute
+   + SOP/Master-Context Gap Analysis methodology
+
+4. okas-markitdown          v2.0.0 → v2.1.0
+   + PDF สแกน → อ่านด้วย Vision (Gemini) แม่นกว่าสำหรับงบการเงิน/ตารางไทย
+   + Checklist ตรวจความสะอาดหลังแก้เอกสาร
+
+5. okas-model-routing       v5.0.0 → v5.1.0
+   + วินิจฉัย Vision ใช้ไม่ได้ (GOOGLE_API_KEY vs GOOGLE_AI_API_KEY)
+
+─────────────────────────────────────────────────
+✨ เพิ่มใหม่ (5 skill)
+─────────────────────────────────────────────────
+
+6.  kas-rcm-v1              v1.0.0
+    สร้าง RCM HTML แบบ interactive — sticky header, เลือกกิจกรรม,
+    ลบหลายแถว, เพิ่มแถว, undo/redo, จัด UNVS ก่อน
+
+7.  kas-sop-review-html     v1.0.0
+    สร้าง SOP Review HTML — กล่องแก้ไขได้, toolbar (Save/Export/Add),
+    gap analysis, พร้อมแปลงเป็น PowerPoint
+
+8.  kas-loa-builder         v1.0.0
+    สร้าง/แก้ Excel ตารางอำนาจอนุมัติ (LOA) — อ่านทุก sheet, ยุบ/เพิ่ม
+    คอลัมน์, แก้ merged cells, highlight มุมมองเจ้าของ
+
+9.  okas-qc-guard           v1.0.0
+    Quality Control Guard — บังคับ 5 กฎคุณภาพ: ไม่ลดคุณภาพเพื่อประหยัด,
+    ไม่สร้างข้อมูลปลอม, ตรวจ markdown ด้วย subagent, review ทุกงาน
+
+10. okas-sop-gap-analysis   v1.0.0
+    วิเคราะห์ gap ระหว่าง SOP กับ Master Context — เทียบ key controls,
+    ระบุ substitute control, ออก editable HTML + export JSON/Text
+
+─────────────────────────────────────────────────
+📦 สรุป: OKAS 8 + KAS 7 = 15 skills
+─────────────────────────────────────────────────
+
+⚙️ Config ที่ตั้งอัตโนมัติ (เหมือนเดิม):
+   model.provider                opencode-go
+   model.default                 deepseek-v4-pro
+   moa.enabled                   false
+   auxiliary.vision.provider     gemini
+   auxiliary.vision.model        gemini-3.6-flash
+   auxiliary.web_extract.*       opencode-go / deepseek-v4-pro
+   delegation.*                  opencode-go / deepseek-v4-pro
+
+🔑 สิ่งที่ต้องมีก่อนติดตั้ง:
+   1. ติดตั้ง Hermes Agent + git + Python
+   2. Google AI API Key → https://aistudio.google.com/apikey
+      (ใส่ใน %LOCALAPPDATA%\hermes\.env ชื่อ GOOGLE_API_KEY)
+
+🔄 Skills ที่ถูกระงับ (ถ้ามีอยู่จะถูกลบอัตโนมัติ):
+   - xkas-note, xkas-client-knowledge-base, xkas-master-context
+
+📁 ติดตั้งที่: %LOCALAPPDATA%\hermes\skills\
+
+📞 ติดต่อ: Thanat @ Telegram

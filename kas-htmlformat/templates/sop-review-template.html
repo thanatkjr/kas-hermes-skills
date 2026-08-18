@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Oxygen AI - Draft SOP Review | {{SOP_NAME}}</title>
+<style>
+  @page { size: 13.333in 7.5in landscape; margin: 0; }
+  :root { --ink:#1a1a2e;--muted:#64748b;--line:#e2e8f0;--paper:#fff;--soft:#f1f5f9;--accent:#1e3a8a;--accent-light:#dbeafe;--red:#b91c1c;--red-bg:#fef2f2;--amber:#92400e;--amber-bg:#fffbeb;--green:#047857;--green-bg:#ecfdf5;--font:'Sarabun','Browallia New','Segoe UI',sans-serif;--shadow:0 2px 8px rgba(0,0,0,.08) }
+  * { box-sizing:border-box;margin:0;padding:0 }
+  body { font-family:var(--font);color:var(--ink);background:#e8ecf1;font-size:19px;line-height:1.65;-webkit-print-color-adjust:exact;print-color-adjust:exact }
+  .toolbar { position:sticky;top:0;z-index:100;background:#0f172a;color:#fff;padding:8px 20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;box-shadow:0 2px 12px rgba(0,0,0,.3) }
+  .toolbar .brand { font-weight:900;font-size:23px;white-space:nowrap }
+  .toolbar .brand span { color:#60a5fa }
+  .toolbar .sep { flex:1 }
+  .toolbar button { padding:7px 16px;border:1px solid rgba(255,255,255,.25);border-radius:7px;background:rgba(255,255,255,.1);color:#fff;cursor:pointer;font-family:var(--font);font-size:18px;font-weight:700;white-space:nowrap;transition:all .15s }
+  .toolbar button:hover { background:rgba(255,255,255,.2) }
+  .toolbar button.primary { background:var(--accent);border-color:var(--accent) }
+  .toolbar button.success { background:#059669;border-color:#059669 }
+  .toolbar .status { font-size:15px;color:#94a3b8;min-width:100px;text-align:right }
+  .slide-container { width:13.333in;height:7.5in;margin:16px auto;background:var(--paper);box-shadow:var(--shadow);border-radius:4px;overflow:hidden;page-break-after:always;display:flex;flex-direction:column }
+  .cover-slide { background:linear-gradient(135deg,#0f172a,#1e3a8a,#2563eb);color:#fff;justify-content:center;align-items:center;text-align:center }
+  .cover-slide h1 { font-size:52px;font-weight:900;margin-bottom:8px }
+  .cover-slide .cover-sub { font-size:25px;color:#93c5fd;margin-bottom:28px }
+  .cover-slide .cover-meta { font-size:19px;color:#94a3b8;line-height:2 }
+  .section-break { background:var(--accent);color:#fff;justify-content:center;align-items:center;text-align:center }
+  .section-break h2 { font-size:43px;font-weight:900;margin-bottom:6px }
+  .section-break p { font-size:20px;color:#93c5fd }
+  .slide-header { padding:10px 24px;background:var(--soft);border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;flex-shrink:0 }
+  .slide-header .title { font-size:23px;font-weight:800 }
+  .slide-header .badge { font-size:15px;font-weight:800;padding:3px 10px;border-radius:999px }
+  .badge.red { background:var(--red-bg);color:var(--red) }
+  .slide-body { flex:1;padding:12px 24px;overflow-y:auto;display:flex;flex-direction:column;gap:8px }
+  .edit-box { border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--paper) }
+  .edit-box .box-label { font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;padding:5px 12px;display:flex;align-items:center;gap:6px }
+  .box-label.gap { background:var(--red-bg);color:var(--red);border-bottom:1px solid #fecaca }
+  .box-label.sub { background:var(--amber-bg);color:var(--amber);border-bottom:1px solid #fde68a }
+  .box-label.action { background:var(--accent-light);color:var(--accent);border-bottom:1px solid #bfdbfe }
+  .box-label.doc { background:var(--green-bg);color:var(--green);border-bottom:1px solid #a7f3d0 }
+  .edit-box .box-content { padding:8px 12px;min-height:48px;outline:none;font-size:19px;line-height:1.65;white-space:pre-wrap;word-break:break-word }
+  .edit-box .box-content:focus { background:#fffbeb;box-shadow:inset 0 0 0 2px #fbbf24 }
+  .edit-box .box-content:empty::before { content:"คลิกเพื่อพิมพ์...";color:#94a3b8;font-style:italic }
+  .split { display:flex;gap:12px;min-height:0 }
+  .split .pbox { flex:1;min-width:0 }
+  .slide-footer { padding:6px 24px;border-top:1px solid var(--line);font-size:14px;color:var(--muted);display:flex;justify-content:space-between;flex-shrink:0 }
+  .mc-ref { font-size:15px;color:var(--muted);margin-bottom:2px }
+  .modal-overlay { position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);z-index:300;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s }
+  .modal-overlay.show { opacity:1;pointer-events:auto }
+  .modal-box { background:#fff;border-radius:12px;padding:24px;max-width:480px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.3);text-align:center }
+  .modal-box h3 { font-size:21px;margin-bottom:8px;color:var(--red) }
+  .modal-box .page-preview { background:var(--soft);border-radius:8px;padding:12px;margin-bottom:20px;font-size:17px;font-weight:700;text-align:left }
+  .modal-box .btn-row { display:flex;gap:10px;justify-content:center }
+  .modal-box button { padding:10px 24px;border-radius:8px;font-family:var(--font);font-size:17px;font-weight:700;cursor:pointer;border:none }
+  .modal-box .btn-cancel { background:var(--soft);color:var(--ink) }
+  .modal-box .btn-delete { background:#dc2626;color:#fff }
+  .toast { position:fixed;bottom:24px;right:24px;background:#0f172a;color:#fff;padding:10px 20px;border-radius:10px;font-weight:700;font-size:19px;z-index:200;opacity:0;transform:translateY(10px);transition:all .25s }
+  .toast.show { opacity:1;transform:translateY(0) }
+  @media print { body{background:#fff} .toolbar,.toast,.modal-overlay{display:none!important} .slide-container{margin:0;box-shadow:none;border-radius:0} .edit-box .box-content:focus{background:inherit;box-shadow:none} }
+</style>
+</head>
+<body>
+<!-- 
+  TEMPLATE: SOP Gap Analysis Review
+  Replace {{PLACEHOLDERS}} with actual data.
+  Each gap = one .slide-container with 4 edit-boxes: Gap, Substitute, Fix Location, Documents.
+  
+  Gap Structure:
+    id: 2.x numbering
+    title: Short descriptive name
+    mc_ref: "Master Context — [process] ขั้นตอนที่ [N]"
+    gap: Description of what's missing (1-2 sentences)
+    substitute: "⚠️ มีบางส่วน — [cross-reference to other SOP] → [what's covered / what's still missing]"
+    fix_location: "SOP [NN] — [exact heading / sub-process code]"
+    fix_how: Precise instructions on what to add and where
+    docs: Bullet list of documents/templates to add
+-->
+
+<div class="toolbar" id="toolbar">
+  <div class="brand">Oxygen AI <span>— Draft SOP Review</span></div>
+  <div class="sep"></div>
+  <button onclick="saveAll()" class="primary">💾 Save</button>
+  <button onclick="saveAs()">📁 Save As…</button>
+  <button onclick="exportJSON()" class="success">📦 Export JSON</button>
+  <button onclick="addPage()" style="background:#7c3aed;border-color:#7c3aed;">➕ Add Page</button>
+  <button onclick="deletePage()" style="background:#dc2626;border-color:#dc2626;">🗑️ Delete</button>
+  <button onclick="exportText()">📄 Export Text</button>
+  <span class="status" id="status">Ready</span>
+</div>
+
+<div class="slide-container cover-slide">
+  <div class="cover-logo">📋</div>
+  <h1>Oxygen AI</h1>
+  <div class="cover-sub">Draft SOP Review</div>
+  <div class="cover-meta">
+    Omnideal Company Limited<br>
+    เอกสารสอบทานนโยบายการปฏิบัติงาน (SOP) เทียบกับ<br>
+    Master Context กระบวนการปฏิบัติงานที่ดี (To-be Process)<br><br>
+    Reviewer: KAS Team<br>
+    Review Date: {{DATE}}
+  </div>
+</div>
+
+<div class="slide-container section-break">
+  <h2>SOP: {{SOP_NAME}}</h2>
+  <p>ไฟล์: {{SOP_FILE}} | Master Context: {{MC_NAME}} | พบ {{GAP_COUNT}} รายการที่ต้องเพิ่ม</p>
+</div>
+
+<!-- GAP SLIDES — repeat this block for each gap -->
+<div class="slide-container" id="slide-{{GAP_ID}}">
+  <div class="slide-header">
+    <div class="title">{{GAP_ID}} {{GAP_TITLE}}</div>
+    <span class="badge red">🔴 Gap</span>
+  </div>
+  <div class="slide-body">
+    <div class="mc-ref">📌 {{MC_REF}}</div>
+    <div class="split">
+      <div class="pbox">
+        <div class="edit-box">
+          <div class="box-label gap">🔴 Gap — สิ่งที่ขาดหายไป</div>
+          <div class="box-content" contenteditable="true">{{GAP_DESC}}</div>
+        </div>
+        <div class="edit-box" style="margin-top:6px">
+          <div class="box-label sub">🔄 การควบคุมทดแทน (Substitute Control)</div>
+          <div class="box-content" contenteditable="true">{{SUBSTITUTE}}</div>
+        </div>
+      </div>
+      <div class="pbox">
+        <div class="edit-box">
+          <div class="box-label action">📍 ตำแหน่งแก้ไขใน SOP + วิธีแก้ไข</div>
+          <div class="box-content" contenteditable="true">📂 {{FIX_LOCATION}}<br><br>✏️ {{FIX_HOW}}</div>
+        </div>
+        <div class="edit-box" style="margin-top:6px">
+          <div class="box-label doc">📄 เอกสารที่ควรเพิ่ม</div>
+          <div class="box-content" contenteditable="true">{{DOCS}}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-footer"><span>Oxygen AI — Draft SOP Review | {{SOP_NAME}}</span><span>{{GAP_ID}}</span></div>
+</div>
+<!-- END GAP SLIDE -->
+
+<div class="slide-container section-break" id="slide-end">
+  <h2>End of Review</h2>
+  <p>SOP: {{SOP_NAME}} — รวม {{GAP_COUNT}} รายการที่ต้องแก้ไข/เพิ่มเติม</p>
+</div>
+
+<div class="modal-overlay" id="modal-delete">
+  <div class="modal-box">
+    <h3>🗑️ ยืนยันการลบหน้า</h3>
+    <p>คุณต้องการลบหน้านี้ใช่หรือไม่? การลบไม่สามารถเรียกคืนได้</p>
+    <div class="page-preview">📄 <span id="del-page-name"></span><br><small id="del-page-id"></small></div>
+    <div class="btn-row">
+      <button class="btn-cancel" onclick="cancelDelete()">❌ ยกเลิก</button>
+      <button class="btn-delete" onclick="confirmDelete()">🗑️ ยืนยันการลบ</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let pageCounter=99, delTarget=null;
+const $status=document.getElementById('status'), $toast=document.getElementById('toast');
+let toastTimer;
+
+function toast(m){ $toast.textContent=m; $toast.classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>$toast.classList.remove('show'),2200) }
+function setStatus(m){ $status.textContent=m }
+
+function collectData(){
+  const slides=[];
+  document.querySelectorAll('.slide-container').forEach(e=>{
+    if(e.classList.contains('cover-slide')||e.classList.contains('section-break')) return;
+    const h=e.querySelector('.slide-header .title'), b=[];
+    e.querySelectorAll('.edit-box').forEach(x=>{
+      const l=x.querySelector('.box-label'), c=x.querySelector('.box-content');
+      b.push({label:l?l.textContent.trim():'', content:c?c.innerHTML:''})
+    });
+    if(b.length) slides.push({id:e.id, title:h?h.textContent.trim():'', boxes:b})
+  });
+  return {title:'Oxygen AI - Draft SOP Review', reviewer:'KAS Team', date:'{{DATE}}', slides}
+}
+
+function saveAll(){
+  try{ localStorage.setItem('oai-review',JSON.stringify(collectData())); setStatus('💾 Saved'); toast('💾 บันทึกเรียบร้อย') }
+  catch(e){ toast('❌ '+e.message) }
+}
+
+function saveAs(){
+  try{
+    const b=new Blob(['<!DOCTYPE html>\n'+document.documentElement.outerHTML],{type:'text/html;charset=utf-8'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(b);
+    a.download='OxygenAI-Review-'+new Date().toISOString().slice(0,10)+'.html'; a.click();
+    setStatus('📁 Saved'); toast('📁 บันทึกเป็นไฟล์ใหม่')
+  }catch(e){ toast('❌ '+e.message) }
+}
+
+function exportJSON(){
+  try{
+    const b=new Blob([JSON.stringify(collectData(),null,2)],{type:'application/json;charset=utf-8'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(b);
+    a.download='OxygenAI-Review-'+new Date().toISOString().slice(0,10)+'.json'; a.click();
+    setStatus('📦 JSON'); toast('📦 ส่งออก JSON')
+  }catch(e){ toast('❌ '+e.message) }
+}
+
+function exportText(){
+  try{
+    const d=collectData(); let t='Oxygen AI — Draft SOP Review\nReviewer: KAS Team\n'+'='.repeat(60)+'\n\n';
+    d.slides.forEach(s=>{
+      t+=s.title+'\n'+'-'.repeat(40)+'\n';
+      s.boxes.forEach(b=>{ const x=document.createElement('div'); x.innerHTML=b.content; t+=b.label+'\n'+x.textContent.trim()+'\n\n' })
+    });
+    const b=new Blob([t],{type:'text/plain;charset=utf-8'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(b);
+    a.download='OxygenAI-Review-'+new Date().toISOString().slice(0,10)+'.txt'; a.click();
+    setStatus('📄 Text'); toast('📄 ส่งออกข้อความ')
+  }catch(e){ toast('❌ '+e.message) }
+}
+
+function addPage(){
+  pageCounter++;
+  const end=document.getElementById('slide-end'), d=document.createElement('div');
+  d.className='slide-container'; d.id='slide-new-'+pageCounter;
+  d.innerHTML='<div class="slide-header"><div class="title" contenteditable="true">ข้อใหม่ '+pageCounter+': คลิกเพื่อพิมพ์หัวข้อ...</div><span class="badge amber">🆕 เพิ่มใหม่</span></div><div class="slide-body"><div class="split"><div class="pbox"><div class="edit-box"><div class="box-label gap">🔴 Gap</div><div class="box-content" contenteditable="true">คลิกเพื่อพิมพ์...</div></div><div class="edit-box" style="margin-top:6px"><div class="box-label sub">🔄 Substitute Control</div><div class="box-content" contenteditable="true">คลิกเพื่อพิมพ์...</div></div></div><div class="pbox"><div class="edit-box"><div class="box-label action">📍 ตำแหน่งแก้ไข + วิธีแก้ไข</div><div class="box-content" contenteditable="true">คลิกเพื่อพิมพ์...</div></div><div class="edit-box" style="margin-top:6px"><div class="box-label doc">📄 เอกสาร</div><div class="box-content" contenteditable="true">คลิกเพื่อพิมพ์...</div></div></div></div></div><div class="slide-footer"><span>Oxygen AI — Draft SOP Review | {{SOP_NAME}}</span><span>ใหม่ '+pageCounter+'</span></div>';
+  end.parentNode.insertBefore(d,end); d.scrollIntoView({behavior:'smooth',block:'center'});
+  setStatus('➕ Page '+pageCounter); toast('➕ เพิ่มหน้าใหม่ — คลิกพิมพ์ได้')
+}
+
+function deletePage(){
+  const slides=document.querySelectorAll('.slide-container'), userSlides=[];
+  slides.forEach(s=>{ if(s.id&&s.id.startsWith('slide-new-')) userSlides.push(s) });
+  if(!userSlides.length){ toast('⚠️ ไม่มีหน้าที่ผู้ใช้เพิ่มเอง'); return }
+  delTarget=userSlides[userSlides.length-1];
+  const title=delTarget.querySelector('.slide-header .title');
+  document.getElementById('del-page-name').textContent=title?title.textContent.trim():'หน้าไม่มีชื่อ';
+  document.getElementById('del-page-id').textContent='ID: '+delTarget.id;
+  document.getElementById('modal-delete').classList.add('show')
+}
+
+function confirmDelete(){
+  if(delTarget){ delTarget.remove(); document.getElementById('modal-delete').classList.remove('show'); delTarget=null; setStatus('🗑️ Deleted'); toast('🗑️ ลบหน้าเรียบร้อย') }
+}
+
+function cancelDelete(){ document.getElementById('modal-delete').classList.remove('show'); delTarget=null }
+
+let autoSaveTimer;
+document.addEventListener('input',function(e){
+  if(e.target.closest('.box-content[contenteditable]')){
+    clearTimeout(autoSaveTimer); autoSaveTimer=setTimeout(saveAll,3000); setStatus('✏️ Editing...')
+  }
+});
+
+document.addEventListener('keydown',function(e){
+  if((e.ctrlKey||e.metaKey)&&e.key==='s'){ e.preventDefault(); saveAll() }
+});
+
+(function(){
+  try{ if(localStorage.getItem('oai-review')) setStatus('📂 Restored') }catch(e){}
+})();
+</script>
+
+</body>
+</html>

@@ -3,7 +3,7 @@
 โครงสร้างข้อมูลที่สมบูรณ์ของ RCM Database (MCP Cloudflare) — ใช้เป็น reference เวลาดึงข้อมูลจาก `get_process_rcm`, `get_activity`, หรือ `get_risk_detail`
 
 > Source: MCP Cloudflare `rcm-mcp-server.thanatkjr.workers.dev`
-> DB Version: 2 | Updated: 2026-07-28
+> DB Version: 4 | Updated: 2026-08-17
 > Totals: 10 processes, 848 activities, 3,502 risks, 7,435 controls, 14,894 tests
 
 ---
@@ -103,22 +103,33 @@ N/A entries have `risk_code: null` and a note like "ไม่ใช่ควา�
 
 ## Sector Codes (used with `get_process_rcm`)
 
-| Code | Industry |
-|------|----------|
-| UNVS | Universal (ทุกธุรกิจ) |
-| ELEC | Electronics / Semiconductor |
-| MACH | Manufacturing / Machinery |
-| FOOD | Food & Beverage |
-| CONS | Construction |
-| COMM | Commerce / Retail |
-| TOUR | Tourism / Hotel |
-| AGRI | Agriculture |
-| ICT | IT / Software |
-| PERS | Personnel Services |
-| MEDA | Media / Entertainment |
-| ENGY | Energy |
-| LOGY | Logistics |
-| PROP | Property / Real Estate |
+> ⚠️ DB v4 มี **31 sector codes** (นับรวม UNVS) — ตารางเก่า (v2) มีแค่ 14 codes และมี typo `LOGY`→`LOGI` อย่าใช้อ้างอิง
+> ✅ **ชื่อไทย confirm แล้ว** (Admin: Thanat, 2026-08-17) — mapping code → ชื่อไทย + 9 หมวด ดูได้ที่ `references/sector-codes.md`
+> ไม่มี field `sector_name` ใน DB — มีแค่ `sector_code` (code สั้น) → ชื่อไทยต้อง mapping จาก sector-codes.md
+
+| Code | Activities | Code | Activities |
+|------|:----------:|------|:----------:|
+| UNVS | 292 | PERS | 20 |
+| HLTH | 33 | CONS | 19 |
+| TOUR | 30 | INSU | 19 |
+| ENGY | 27 | MINE | 19 |
+| FOOD | 25 | FRAN | 18 |
+| GOVT | 23 | PROP | 18 |
+| LOGI | 23 | AGRI | 17 |
+| MEDA | 22 | MACH | 17 |
+| AUTO | 21 | PACK | 16 |
+| PETR | 21 | SECU | 15 |
+| REIT | 21 | FASH | 15 |
+| BANK | 20 | COMM | 14 |
+| | | PAPR | 14 |
+| | | ELEC | 13 |
+| | | PROF | 13 |
+| | | ICT | 12 |
+| | | STEL | 12 |
+| | | CMAT | 11 |
+| | | HOME | 8 |
+
+หมายเหตุ: `sector_code` ปรากฏใน field ของ activity object (`get_process_overview` คืนแค่ 4 field: `activity_code`, `activity_name`, `sector_code`, `risks`). ไม่มี MCP tool ชื่อ `list_sectors` — ใช้ `references/sector-codes.md` (31 codes + ชื่อไทย + 9 หมวด) ได้เลย ไม่ต้อง derive ใหม่ทุกครั้ง
 
 ---
 

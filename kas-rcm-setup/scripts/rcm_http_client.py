@@ -267,6 +267,29 @@ class RCMClient:
             "risk_code": risk_code
         })
     
+    def find_activities(self, keywords_activity: list, keywords_person: list = None,
+                        keywords_doc: list = None, process_code: str = None,
+                        sector_code: str = None, min_facets: int = None) -> dict:
+        """
+        Search activities by 3-dimensional keyword intersection (activity/person/doc).
+        Returns {total_matched, returned, capped, facets_supplied, min_facets, results}.
+        Each result: {activity_code, activity_name, process_code, sector_code,
+                      facets_hit, score, matched:{activity[],person[],doc[]}}.
+        NOTE: capped at 20 results (capped=True when total_matched > returned).
+        """
+        args = {"keywords_activity": keywords_activity or []}
+        if keywords_person:
+            args["keywords_person"] = keywords_person
+        if keywords_doc:
+            args["keywords_doc"] = keywords_doc
+        if process_code:
+            args["process_code"] = process_code
+        if sector_code:
+            args["sector_code"] = sector_code
+        if min_facets:
+            args["min_facets"] = min_facets
+        return self._tool("find_activities", args)
+
     def get_process_rcm(self, process_code: str, sector_code: str) -> dict:
         """
         Get the FULL RCM for ONE process — all activities, risks, controls,

@@ -1,0 +1,85 @@
+<!-- SOP Review HTML Template — editable, exportable, print-ready -->
+<!-- Replace {placeholders} with real data before saving -->
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Oxygen AI - Draft SOP Review | {sop_name}</title>
+<style>
+  @page { size: 13.333in 7.5in landscape; margin: 0; }
+  :root { --ink:#1a1a2e;--muted:#64748b;--line:#e2e8f0;--paper:#fff;--soft:#f1f5f9;--accent:#1e3a8a;--accent-light:#dbeafe;--red:#b91c1c;--red-bg:#fef2f2;--amber:#92400e;--amber-bg:#fffbeb;--green:#047857;--green-bg:#ecfdf5;--font:'Sarabun','Browallia New','Segoe UI',sans-serif;--shadow:0 2px 8px rgba(0,0,0,.08); }
+  * { box-sizing:border-box;margin:0;padding:0; }
+  body { font-family:var(--font);color:var(--ink);background:#e8ecf1;font-size:19px;line-height:1.65;-webkit-print-color-adjust:exact;print-color-adjust:exact; }
+  /* Toolbar, Slide Container, Editable Boxes, Cover, Section Break, Split Layout — see full template for complete CSS */
+</style>
+</head>
+<body>
+<!-- TOOLBAR -->
+<div class="toolbar">
+  <div class="brand">Oxygen AI <span>— Draft SOP Review</span></div>
+  <div class="sep"></div>
+  <button onclick="saveAll()" class="primary">💾 Save</button>
+  <button onclick="saveAs()">📁 Save As…</button>
+  <button onclick="exportJSON()" class="success">📦 Export JSON</button>
+  <button onclick="addPage()" style="background:#7c3aed;border-color:#7c3aed;">➕ Add Page</button>
+  <button onclick="exportText()">📄 Export Text</button>
+  <span class="status" id="status">Ready</span>
+</div>
+
+<!-- COVER -->
+<div class="slide-container cover-slide">
+  <div class="cover-logo">📋</div>
+  <h1>Oxygen AI</h1>
+  <div class="cover-sub">Draft SOP Review</div>
+  <div class="cover-meta">Omnideal Company Limited<br>Reviewer: KAS Team<br>Review Date: {date}</div>
+</div>
+
+<!-- SECTION HEADER -->
+<div class="slide-container section-break">
+  <h2>SOP: {sop_name}</h2>
+  <p>ไฟล์: {sop_file} | Master Context: {mc_name} | พบ {gap_count} รายการ</p>
+</div>
+
+<!-- GAP SLIDES — repeat for each gap -->
+<div class="slide-container">
+  <div class="slide-header">
+    <div class="title">{gap.id} {gap.title}</div>
+    <span class="badge red">🔴 Gap</span>
+  </div>
+  <div class="slide-body">
+    <div class="split">
+      <div class="pbox">
+        <div class="edit-box">
+          <div class="box-label gap">🔴 Gap — สิ่งที่ขาดหายไป</div>
+          <div class="box-content" contenteditable="true">{gap.text}</div>
+        </div>
+        <div class="edit-box" style="margin-top:6px">
+          <div class="box-label sub">🔄 การควบคุมทดแทน (Substitute Control)</div>
+          <div class="box-content" contenteditable="true">{gap.substitute}</div>
+        </div>
+      </div>
+      <div class="pbox">
+        <div class="edit-box">
+          <div class="box-label action">📍 ตำแหน่งแก้ไขใน SOP + วิธีแก้ไข</div>
+          <div class="box-content" contenteditable="true">📂 {gap.fix_location}<br><br>✏️ {gap.fix_how}</div>
+        </div>
+        <div class="edit-box" style="margin-top:6px">
+          <div class="box-label doc">📄 เอกสารที่ควรเพิ่ม</div>
+          <div class="box-content" contenteditable="true">{gap.docs}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-footer"><span>Oxygen AI — Draft SOP Review | {sop_name}</span><span>{gap.id}</span></div>
+</div>
+
+<!-- END -->
+<div class="slide-container section-break" id="slide-end">
+  <h2>End of Review</h2>
+  <p>{sop_name} — รวม {gap_count} รายการ</p>
+</div>
+
+<!-- SCRIPTS: saveAll, saveAs, exportJSON, exportText, addPage, collectData, auto-save, Ctrl+S -->
+</body>
+</html>

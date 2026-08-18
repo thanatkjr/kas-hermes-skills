@@ -1,5 +1,5 @@
 {
-  "approved_kas": ["kas-rcm-setup", "kas-master-note", "kas-htmlformat", "kas-ia-report-helper"],
+  "approved_kas": ["kas-rcm-setup", "kas-master-note", "kas-htmlformat", "kas-ia-report-helper", "kas-rcm-v1", "kas-sop-review-html", "kas-loa-builder"],
   "deprecated": [
     "xkas-note",
     "xkas-client-knowledge-base",
