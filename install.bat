@@ -1,4 +1,4 @@
-@echo off
+﻿@echo off
 setlocal enabledelayedexpansion
 title OKAS/KAS Skills Installer for Hermes
 

@@ -1,0 +1,2 @@
+# Batch files must keep CRLF line endings + UTF-8 BOM for cmd.exe to parse Thai correctly
+*.bat -text
